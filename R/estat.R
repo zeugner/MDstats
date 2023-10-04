@@ -1,0 +1,1 @@
+#oo=download.file("https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/bop_c6_a?compressed=true",tt)
