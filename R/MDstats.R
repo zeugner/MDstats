@@ -26,7 +26,9 @@ NULL
 
 .onLoad = function (libname, pkgname) {
   require(data.table)
-     providertable=utils::read.csv('data/providers.csv',stringsAsFactors = FALSE,header = TRUE, na.strings='')
+  message(libname,pkgname)
+     providertablepath=dir(getwd(),pattern = 'providers.csv',recursive = TRUE,full.names = TRUE)[1L]
+     providertable=utils::read.csv(providertablepath,stringsAsFactors = FALSE,header = TRUE, na.strings='')
      rownames(providertable) = providertable[[1]]
 
      colnames(providertable)[[1]]='AgencyID'; rownames(providertable)=providertable[[1]]
