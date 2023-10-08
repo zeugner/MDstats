@@ -71,6 +71,26 @@
 
 }
 
+.vintageAmecourl = function(year,release) {
+  #year must be >2011. release must be a or s
+
+    release=switch(substr(tolower(trimws(release)),0,1),a='autumn',s='spring','1'='spring','2'='autumn')
+
+  baseurl='https://economy-finance.ec.europa.eu/economic-research-and-databases/economic-databases/ameco-database/ameco-archive_en'
+  #src=httr::GET(baseurl)
+  src=readLines(baseurl)
+  sline=src[grep(paste0('<h2>\\s*',year),src)]
+  slin2=sub(paste0('^.*<h2>\\s*',year),'',sline)
+  slin3=gsub("\\<h2.*$",'',substr(slin2,15,10000))
+  ix=attr(regexpr(paste0('^.*',tolower(release)),tolower(slin3)),'match.length')
+  slin4=substr(slin3,ix-200,ix+100)
+  if (!length(slin4)) {stop('The Ameco file for ',year,' ',release,' is not available at\n',baseurl)}
+  slin5=paste0(gsub('^.*href="','',gsub('\\.zip".*$','',slin4)),'.zip')
+  surl=paste0(gsub('\\.eu/.*$','',baseurl),'.eu',slin5)
+  return(surl)
+
+}
+
 #' Load data from publicly available Ameco, and is past vintages
 #'
 #' @param code a RestFul code combination respecting Ameco dimensions GEO.x.x.x.x.INDICATOR, e.g. \code{CAN.1.0.99+0.0.UVGD}
@@ -82,6 +102,7 @@
 #' @param startPeriod startyear (1960 if empty)
 #' @param endPeriod end year (latest available if left empty)
 #' @param inclaggreg default FALSE. In that case, if all countries are requested, the function returns individual counties as well as the latest EU and EA aggregate. If TRUE, it also returns other aggregates from Ameco, such as EA12.
+#' @param verbose not active
 #' @return an md3 object or other as specified by \code{as}
 #' @details This function works by caching Ameco vintages on the local drive
 #' @seealso \code{\link{mdStat}} for loading from major data sources
@@ -97,11 +118,11 @@
 #'
 #' \dontrun{growth(mdAmeco('EST+CZE.1.0.0.0.ZCPIH',startPeriod=2020))} #inflation rates in Estonia and Czechia from 2021
 #'
-#'
+#' \dontrun{mdAmeco("AT+BE.1.0.0.0.UVGD",2017,2)}
 #'
 #' @export
 mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data.table","zoo","2d","1d"),
-                   drop=TRUE, ccode=defaultcountrycode(), startPeriod=NULL, endPeriod=NULL, inclaggreg=FALSE) {
+                   drop=TRUE, ccode=defaultcountrycode(), startPeriod=NULL, endPeriod=NULL, inclaggreg=FALSE,verbose=TRUE) {
 
   if (length(code)>1) { warning('code has to be singleton'); code=code[1]}
   nbpoints=nchar(gsub("[^\\.]","",code))
@@ -148,6 +169,6 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
 }
 
 helpmdAmeco = function(...) {
-  stop("helpmdAmeco not yet ready")
+  stop("helpmdAmeco not  ready yet")
 }
 
