@@ -129,7 +129,7 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
 
 
 
-.stackedsdmx =function(mycode,justurl=FALSE,justxml=FALSE) {
+.stackedsdmx =function(mycode,justurl=FALSE,justxml=FALSE,verbose=FALSE) {
 
   mycode=trimws(mycode)
   if (substr(mycode,0,4)=='http') {
@@ -141,7 +141,8 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
   }
 
   if (justurl) return(myurl)
-  ressdmx <- rsdmx::readSDMX(myurl)
+  if (verbose) cat('\nreading from ',myurl,' ...\n')
+  ressdmx <- rsdmx::readSDMX(myurl,verbose = verbose)
   if (justxml) return(ressdmx)
   if (class(ressdmx)=='SDMXCompactData') {
     res=rsdmx:::as.data.frame.SDMXCompactData(ressdmx)
@@ -241,7 +242,7 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
     possdn = .mdstats_providers$dfdims(.fixSdmxCode(mycode)[[1]],.fixSdmxCode(mycode)[[2]],verbose)
   }
 
-  mxml=.stackedsdmx(mycode,justxml=TRUE)
+  mxml=.stackedsdmx(mycode,justxml=TRUE,verbose=verbose)
   mout=.xml2md3(mxml,mycode,names(possdn))
   if (metadata) {
 
@@ -519,7 +520,9 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
   isthere=unlist(lapply(biglcl[[lcode[1]]][paste0(lcode[1],'/',possdn)],length))
   if (!length(isthere) || !all(isthere)) {
     if (!supersilent) message('Fetching dimension metadata for ',lcode[2],' from ',lcode[1], ', this might take some time')
-    dfdsd=rsdmx::readSDMX(.rsdmxurl(lcode[1],resource='datastructure',resourceId = dsdid),verbose=verbose)
+    xurl=.rsdmxurl(lcode[1],resource='datastructure',resourceId = dsdid)
+    if (verbose) cat(xurl,'\n')
+    dfdsd=rsdmx::readSDMX(xurl,verbose=verbose)
     dfcl=.extractDimcodes(dfdsd)
 
     biglcl[[lcode[1]]][unlist(lapply(dfcl,attr,'codelist'))] <- dfcl

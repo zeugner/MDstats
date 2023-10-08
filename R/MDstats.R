@@ -26,7 +26,7 @@ NULL
 
 .onLoad = function (libname, pkgname) {
   require(data.table); require(XML); require(MD3)
-  message(libname,pkgname)
+  #message(libname,pkgname)
      providertablepath=dir(getwd(),pattern = 'providers.csv',recursive = TRUE,full.names = TRUE)[1L]
      providertable=utils::read.csv(providertablepath,stringsAsFactors = FALSE,header = TRUE, na.strings='')
      rownames(providertable) = providertable[[1]]
