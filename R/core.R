@@ -119,8 +119,8 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
       if (nchar(x)>0) {return(cacheddatas[[x]])} else return(cacheddatas)
     }
 
-    if (MD3:::.md3_is(x)) { cacheddatas[[id]]<<-x}
-    if (is.list(x)) { cacheddatas[names(x)]<<-x}
+    if (MD3:::.md3_is(x)) { cacheddatas[[id]]<<-x} else if (is.list(x)) { cacheddatas[names(x)]<<-x}
+    if (nchar(id)>0) {return(invisible(cacheddatas[[id]]))}
     return(invisible(cacheddatas))
   }
   return(outlist)
@@ -155,7 +155,7 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
 
 
 }
-1
+
 .xml2md3 = function(ressdmx,nbdimsexcltime=0,dims=character()) {
 
   if (!length(dims) && is.character(nbdimsexcltime)) {
@@ -689,7 +689,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
         mydim=mydim[ix,,drop=FALSE]
         splural='s'; if (NROW(mydim)<2) splural=''
         cat(NROW(mydim), ' code',splural,' or label',splural,' match',ifelse(splural=='','es',''),' the pattern "',pattern,'":\n',sep='')
-        cat(capture.output(print(head(mydim,50))),sep='\n')
+        cat(capture.output(print(head(mydim,50),right=FALSE)),sep='\n')
       } else {
         cat('No label or code matching "',pattern,'" could be found')
       }

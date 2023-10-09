@@ -36,12 +36,12 @@
 }
 
 
-.parseAmeco= function(year=0,release=0,quiet=TRUE) {
+.parseAmeco= function(year=0,release=0,verbose=TRUE) {
   #downloads IMF WEO data
   #ARGUMENTS
   # year: e.g. 2009
   # release: either 1 or 2
-  zipfilepath=.mdAMECOfilepath(year,release)
+  zipfilepath=.mdAMECOfilepath(year,release,quiet = !verbose)
   vfiles=utils::unzip(zipfilepath,exdir = gsub("\\.zip","",zipfilepath),overwrite=TRUE)
 
 
@@ -125,25 +125,28 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
                    drop=TRUE, ccode=defaultcountrycode(), startPeriod=NULL, endPeriod=NULL, inclaggreg=FALSE,verbose=TRUE) {
 
   if (length(code)>1) { warning('code has to be singleton'); code=code[1]}
-  nbpoints=nchar(gsub("[^\\.]","",code))
-  if (nbpoints==5) {
+  if (is.character(code)) if (nchar(code[1])==0) code=character()
+  if (length(code)) {
+    nbpoints=nchar(gsub("[^\\.]","",code))
+    if (nbpoints==5) {
+      temp=strsplit(code,split='\\.')[[1L]];
+      code =paste(temp[[1]],paste(temp[2:5],collapse = '_'),temp[[6]],sep='.')
+      if (any(grepl('_[0-9]*\\+[0-9]*_',code))) code=paste(temp[1],paste(apply(as.matrix(as.data.frame(strsplit(temp[2:5],split ='\\+'))),1,paste,collapse='_'),collapse = '+'),temp[6],sep='.')
+    }
+    if (nchar(gsub("[^\\.]","",code))!= 2) stop('cannot interpret code ',code)
     temp=strsplit(code,split='\\.')[[1L]];
-    code =paste(temp[[1]],paste(temp[2:5],collapse = '_'),temp[[6]],sep='.')
-    if (any(grepl('_[0-9]*\\+[0-9]*_',code))) code=paste(temp[1],paste(apply(as.matrix(as.data.frame(strsplit(temp[2:5],split ='\\+'))),1,paste,collapse='_'),collapse = '+'),temp[6],sep='.')
-  }
-  if (nchar(gsub("[^\\.]","",code))!= 2) stop('cannot interpret code ',code)
-  temp=strsplit(code,split='\\.')[[1L]];
-  if (any(grepl('\\+',temp[[1L]]))) {
+    if (any(grepl('\\+',temp[[1L]]))) {
 
-
-
-
-    temp[[1L]]=paste(MDcountrycode::ccode(strsplit(temp[[1L]],split='\\+')[[1L]],c('iso2m','iso3c','iso2c'),'ameco',leaveifNA = TRUE,warn = FALSE),collapse='+')
-    code=paste(temp,collapse = '.')
-  }
+      temp[[1L]]=paste(MDcountrycode::ccode(strsplit(temp[[1L]],split='\\+')[[1L]],c('iso2m','iso3c','iso2c'),'ameco',leaveifNA = TRUE,warn = FALSE),collapse='+')
+      code=paste(temp,collapse = '.')
+    }
+  } else {temp=''}
 
   tempameco=.mdstats_providers$cachedmd3s(paste0('AMECO',year,release))
-  if (is.null(tempameco)) tempameco=.mdstats_providers$cachedmd3s(.parseAmeco(year=year,release = release),paste0('AMECO',year,release))
+  if (is.null(tempameco)) {
+    if (verbose) cat('\nLoading Ameco from source, this might take some time...')
+    tempameco=.mdstats_providers$cachedmd3s(.parseAmeco(year=year,release = release, verbose=verbose),paste0('AMECO',year,release))
+  }
   if (!inclaggreg) {
 
     selcc=MD3:::.getdimnames(tempameco)[['GEO']];
@@ -155,7 +158,6 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
     mydc=attr(tempameco,'dcstruct'); mydc[['GEO']]=mydc[['GEO']][selcc,]; attr(tempameco,'dcstruct')<-mydc
 
   }
-  if (is.character(code)) if (nchar(code)==0) code=character()
   if (!length(code)) return(tempameco)
   if (!missing(startPeriod)) { startPeriod=as.integer(startPeriod)  }
   if (!missing(startPeriod)) { endPeriod=as.integer(endPeriod)  }
@@ -168,7 +170,62 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
   MD3:::.getas(mout,as)
 }
 
-helpmdAmeco = function(...) {
-  stop("helpmdAmeco not  ready yet")
+helpmdAmeco = function(query='', pattern = "", dim = NULL, verbose = TRUE) {
+  #stop("helpmdAmeco not  ready yet")
+  vcode=suppressWarnings(.fixSdmxCode(query))
+  vcode=vcode[nchar(vcode)>0]
+
+
+
+
+  if (length(dim)) {
+    #its about a dimension:
+    if (is.numeric(dim)) dim=c('GEO','TRAFO','INDICATOR')[dim]
+    if (grepl('^geo|^cou',tolower(dim))) { dim='GEO'}
+    if (grepl('^trafo',tolower(dim))) { dim='TRAFO'}
+    if (grepl('^indic|^varia|^subj',tolower(dim))) { dim='INDICATOR'}
+    if (!(dim %in% c('GEO','TRAFO','INDICATOR'))) stop('dimension ',dim,' is not available from Ameco')
+    thatameco=names(.mdstats_providers$cachedmd3s()); thatameco=thatameco[grepl('AMECO',thatameco)][1]
+    if (!length(thatameco)) { temp=mdAmeco(); thatameco='AMECO00' }
+    odn=MD3:::.getdimcodes(.mdstats_providers$cachedmd3s(thatameco))
+    odn=odn[[dim]]
+    #return(invisible(odn[[dim]]))
+
+
+    if (!nchar(pattern)) {
+
+
+        cat('Dimension ',dim, 'contains ',NROW(odn),' codes that have data:\n',sep='')
+        cat(capture.output(print(head(odn,50))),sep='\n')
+        if (NROW(odn)>50) cat('\nand ',NROW(odn)-50,'more ')
+
+      cat('\nRun e.g. helpmdAmeco("", dim="',dim,'", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension ',dim,sep='')
+      cat('\nRun e.g. xx=helpmdAmeco(dim="',dim,'") to load all codes and descriptions for dimension ',dim,' into variable xx\n',sep='')
+
+      return(invisible(odn))
+    } else {
+
+      ix=union(grep(pattern,rownames(odn),ignore.case = TRUE),which(apply(odn,1,function(x) any(grepl(pattern,x,ignore.case = TRUE)))))
+      if (length(ix)) {
+        mydim=odn[ix,,drop=FALSE]
+        splural='s'; if (NROW(mydim)<2) splural=''
+        cat(NROW(mydim), ' code',splural,' or label',splural,' match',ifelse(splural=='','es',''),' the pattern "',pattern,'":\n',sep='')
+        cat(capture.output(print(head(mydim,50),right=FALSE)),sep='\n')
+      } else {
+        cat('No label or code matching "',pattern,'" could be found')
+        return(invisible(odn))
+      }
+      return(invisible(mydim))
+    }
+
+  }
+
+
+  if (!length(vcode)) {
+    cat('\nAmeco has the following dimensions excl TIME:\n')
+    cat('GEO, TRAFO, INDICATOR\n')
+    cat('Run e.g. helpmdAmeco(dim="INDICATOR", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension INDICATOR')
+    return(invisible(NULL))
+  }
 }
 

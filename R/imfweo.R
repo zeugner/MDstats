@@ -119,7 +119,7 @@
 #' @export
 mdWEO = function(code=NULL,year=0,release=0,
                   as=c("md3", "array", "numeric","data.table","zoo","2d","1d"),
-                  drop=TRUE,ccode=NULL,startPeriod,endPeriod) {
+                  drop=TRUE,ccode=defaultcountrycode(),startPeriod,endPeriod) {
   tempweo=.mdstats_providers$cachedmd3s(paste0('WEO',year,release))
   if (is.null(tempweo)) tempweo=.mdstats_providers$cachedmd3s(.parseWEO(year=year,release = release),paste0('WEO',year,release))
   if (is.character(code)) if (nchar(code)==0) code=character()
@@ -152,3 +152,68 @@ helpmdWEO = function(code){
   cat('proper help not avaialble yet. The structure is COUNTRY.SUBJECT.TIME\nList of SUBJECT indicators:\n')
   cat(capture.output(MD3:::.getdimcodes(mdWEO())[['SUBJECT']]),sep='\n')
 }
+
+
+
+
+
+
+helpmdWEO = function(query='', pattern = "", dim = NULL, verbose = TRUE) {
+  #stop("helpmdAmeco not  ready yet")
+  vcode=suppressWarnings(.fixSdmxCode(query))
+  vcode=vcode[nchar(vcode)>0]
+
+
+
+
+  if (length(dim)) {
+    #its about a dimension:
+    if (is.numeric(dim)) dim=c('COUNTRY','SUBJECT')[dim]
+    if (grepl('^geo|^cou',tolower(dim))) { dim='COUNTRY'}
+    if (grepl('^indic|^varia|^subj',tolower(dim))) { dim='SUBJECT'}
+    if (!(dim %in% c('COUNTRY','SUBJECT'))) stop('dimension ',dim,' is not available from IMF WEO')
+    thatweo=names(.mdstats_providers$cachedmd3s()); thatweo=thatweo[grepl('WEO',thatweo)][1]
+    if (!length(thatweo)) { temp=mdWEO(); thatweo='WEO00' }
+    odn=MD3:::.getdimcodes(.mdstats_providers$cachedmd3s(thatweo))
+    odn=odn[[dim]]
+    #return(invisible(odn[[dim]]))
+
+
+    if (!nchar(pattern)) {
+
+
+      cat('Dimension ',dim, 'contains ',NROW(odn),' codes that have data:\n',sep='')
+      cat(capture.output(print(head(odn,50))),sep='\n')
+      if (NROW(odn)>50) cat('\nand ',NROW(odn)-50,'more ')
+
+      cat('\nRun e.g. helpmdWEO("", dim="',dim,'", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension ',dim,sep='')
+      cat('\nRun e.g. xx=helpmdWEO(dim="',dim,'") to load all codes and descriptions for dimension ',dim,' into variable xx\n',sep='')
+
+      return(invisible(odn))
+    } else {
+
+      ix=union(grep(pattern,rownames(odn),ignore.case = TRUE),which(apply(odn,1,function(x) any(grepl(pattern,x,ignore.case = TRUE)))))
+      if (length(ix)) {
+        mydim=odn[ix,,drop=FALSE]
+        splural='s'; if (NROW(mydim)<2) splural=''
+        cat(NROW(mydim), ' code',splural,' or label',splural,' match',ifelse(splural=='','es',''),' the pattern "',pattern,'":\n',sep='')
+        cat(capture.output(print(head(mydim,50),right=FALSE)),sep='\n')
+      } else {
+        cat('No label or code matching "',pattern,'" could be found')
+        return(invisible(odn))
+      }
+      return(invisible(mydim))
+    }
+
+  }
+
+
+  if (!length(vcode)) {
+    cat('\nAmeco has the following dimensions excl TIME:\n')
+    cat('COUNTRY, SUBJECT\n')
+    cat('A typical request would look like mdWEO("AUT.NGDP")\n')
+    cat('Run e.g. helpmdWEO(dim="SUBJECT", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension SUBJECT')
+    return(invisible(NULL))
+  }
+}
+
