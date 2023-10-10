@@ -6,9 +6,9 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
 #   colnames(providertable)[[1]]='AgencyID'; rownames(providertable)=providertable[[1]]
 #   return(providertable)
 # }
-.mdstats_providerscreate=function(){
+.mdstats_providerscreate=function(.dprovs=NULL){
   #.dprovs =  data.loadproviders()
-  .dprovs = providertable
+  if (!length(.dprovs))  {utils::data('providertable'); .dprovs=providertable}  #.loadproviders()
   #colnames(.dprovs)[[1]]='AgencyID'; rownames(.dprovs)=.dprovs[[1]]
 
 
@@ -37,7 +37,7 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
   ssuffix['NBB']='/all?detail=serieskeysonly&format=compact_v2'
   ssuffix['WB']='/?startperiod=1960&endPeriod=2100'
 
-  if (!exists('.dprovs')) .dprovs=providertable
+  if (!exists('.dprovs')) {.dprovs=providertable} #else {warning('could not find providertable of class ',class(.dprovs)) }
   .buildaliases=function() {
     anames0=strsplit(.dprovs[,'AltNicks'],split=',')
     names(anames0) = .dprovs[,'AgencyID']
