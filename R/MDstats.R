@@ -1,3 +1,5 @@
+#' @include data.R
+#'
 #' MDstats: A package providing for multi-dimensional data manipulation
 #'
 #'
@@ -8,7 +10,7 @@
 #' @section Further work:
 #'
 #'
-#' This packge is still under development; there are certainly some bugs lurking around
+#' This package is still under development; there are certainly some bugs lurking around
 #'
 #' Conversion to and from \code{data.table}, tibble, and \code{pdata.frame} is to be added
 #'
@@ -27,13 +29,13 @@ NULL
 .onLoad = function (libname, pkgname) {
   require(data.table); require(XML); require(MD3)
   #message(libname,pkgname)
-     providertablepath=dir(paste0(libname,'/',pkgname'),pattern = 'providers.csv',recursive = TRUE,full.names = TRUE)[1L]
-     providertable=utils::read.csv(providertablepath,stringsAsFactors = FALSE,header = TRUE, na.strings='')
-     rownames(providertable) = providertable[[1]]
-     colnames(providertable)[[1]]='AgencyID'; rownames(providertable)=providertable[[1]]
-     assign('providertable', providertable, envir = topenv())
-  .rsdmxfixer()
-  assign('.mdstats_providers', .mdstats_providerscreate(), envir = topenv())
+
+  #warning('provtbl ',exists('providertable', envir = topenv()))
+ # utils::data('providertable', envir=topenv())
+  #assign('providertable',  envir = topenv())
+
+  # assign('.mdstats_providers', .mdstats_providerscreate(providertable), envir = topenv())
+  # .rsdmxfixer()
 
 }
 

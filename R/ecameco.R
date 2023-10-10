@@ -1,3 +1,5 @@
+#' @include data.R
+
 .mdAMECOfilepath = function (year=0,release=c('spring','autumn'), quiet=TRUE,conttrying=TRUE)
 {
   if (year<2010 & year>0) stop("Ameco vintages pre-2011 are not available ")

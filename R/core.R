@@ -1,14 +1,16 @@
+#' @include data.R
+
 library(data.table);library(XML);library(rsdmx); library(MD3)
-# .loadproviders=function() {
-#   providertable=utils::read.csv('data/providers.csv',stringsAsFactors = FALSE,header = TRUE, na.strings='')
-#   rownames(providertable) = providertable[[1]]
+#  .loadproviders=function() {
+#    providertable=utils::read.csv('data/providers.csv',stringsAsFactors = FALSE,header = TRUE, na.strings='')
+#    rownames(providertable) = providertable[[1]]
 #
-#   colnames(providertable)[[1]]='AgencyID'; rownames(providertable)=providertable[[1]]
-#   return(providertable)
+#    colnames(providertable)[[1]]='AgencyID'; rownames(providertable)=providertable[[1]]
+#    return(providertable)
 # }
-.mdstats_providerscreate=function(){
+.mdstats_providerscreate=function(.dprovs=NULL){
   #.dprovs =  data.loadproviders()
-  .dprovs = providertable
+  if (!length(.dprovs))  {utils::data('providertable'); .dprovs=providertable}  #.loadproviders()
   #colnames(.dprovs)[[1]]='AgencyID'; rownames(.dprovs)=.dprovs[[1]]
 
 
@@ -17,7 +19,7 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
   sproviders=sapply(p2@providers, function(x) x@agencyId)
 
 
-  surls=sapply(as.list(sproviders),function(x) findSDMXServiceProvider(x)@builder@regUrl)
+  surls=sapply(as.list(sproviders),function(x) rsdmx::findSDMXServiceProvider(x)@builder@regUrl)
   surls=paste0(surls,'/data/')
 
   names(surls)=sproviders
@@ -37,7 +39,7 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
   ssuffix['NBB']='/all?detail=serieskeysonly&format=compact_v2'
   ssuffix['WB']='/?startperiod=1960&endPeriod=2100'
 
-  if (!exists('.dprovs')) .dprovs=providertable
+  if (!exists('.dprovs')) {.dprovs=providertable} #else {warning('could not find providertable of class ',class(.dprovs)) }
   .buildaliases=function() {
     anames0=strsplit(.dprovs[,'AltNicks'],split=',')
     names(anames0) = .dprovs[,'AgencyID']
@@ -49,7 +51,7 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
     anames
   }
 
-  valiases=.buildaliases()
+  valiases=character()
   cacheddatas=list()
   ldf= as.list(.dprovs$AgencyID); names(ldf)=unlist(ldf); ldf=lapply(ldf,function(x) data.table())
   #ldsds=lapply(ldf,function(x) list())
@@ -61,7 +63,7 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
   outlist$sources = data.frame(prov=sproviders,dataurl=surls[sproviders],datasuffix=ssuffix[sproviders],stringsAsFactors = FALSE, row.names = sproviders)
   outlist$sayah = function() message("ah")
   outlist$overview=.dprovs
-  outlist$alias = function(x) {gout=unname(valiases[toupper(gsub('/.*$','',x))]); if (!anyNA(gout)) {return(gout)}; warning('Provider ',gsub('/.*$','',x), ' not available from mdStats'); return(x)}
+  outlist$alias = function(x) {if (!length(valiases)) {valiases<<- .buildaliases()}; gout=unname(valiases[toupper(gsub('/.*$','',x))]); if (!anyNA(gout)) {return(gout)}; warning('Provider ',gsub('/.*$','',x), ' not available from mdStats'); return(x)}
   outlist$dataflows = function(sprovider) {
     sprovider=valiases[toupper(sprovider)]
     if (!NROW(ldf[[sprovider]])) {

@@ -13,7 +13,8 @@ mdAmeco(
   ccode = defaultcountrycode(),
   startPeriod = NULL,
   endPeriod = NULL,
-  inclaggreg = FALSE
+  inclaggreg = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ mdAmeco(
 \item{endPeriod}{end year (latest available if left empty)}
 
 \item{inclaggreg}{default FALSE. In that case, if all countries are requested, the function returns individual counties as well as the latest EU and EA aggregate. If TRUE, it also returns other aggregates from Ameco, such as EA12.}
+
+\item{verbose}{not active}
 }
 \value{
 an md3 object or other as specified by \code{as}
@@ -56,7 +59,7 @@ foo=mdAmeco()
 
 \dontrun{growth(mdAmeco('EST+CZE.1.0.0.0.ZCPIH',startPeriod=2020))} #inflation rates in Estonia and Czechia from 2021
 
-
+\dontrun{mdAmeco("AT+BE.1.0.0.0.UVGD",2017,2)}
 
 }
 \seealso{
