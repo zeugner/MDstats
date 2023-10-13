@@ -213,6 +213,6 @@ mdWEO = function(code=NULL,year=0,release=0,
     cat('A typical request would look like mdWEO("AUT.NGDP")\n')
     cat('Run e.g. helpmdWEO(dim="SUBJECT", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension SUBJECT')
     return(invisible(NULL))
-  }
+  } else stop('???')
 }
 

@@ -250,12 +250,18 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
 
   }
 
-
+  if (toupper(vcode[1])=='AMECO') {vcode=character()}
   if (!length(vcode)) {
+    if (sdmxlike) {
+      cat('\nAMECO has only one dataflow available via mdStat: "AMECO/A"\n')
+      cat('It may be used like mdStat("AMECO/A/FRA+AUT.1_0_0_0_UVGD")\n')
+      cat('Use function mdAmeco() for more options, in particular to split Ameco data into more dimnesions, or to retrieve earlier vintages \n')
+    }
+
     cat('\nAmeco has the following dimensions excl TIME:\n')
-    cat('GEO, TRAFO, INDICATOR\n')
+    cat('GEO, INDICATOR\n')
     cat('Run e.g. helpmdAmeco(dim="INDICATOR", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension INDICATOR')
     return(invisible(NULL))
-  }
+  } else stop('???')
 }
 
