@@ -427,16 +427,11 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
 #' @export
 mdsdmx = function(code, drop=TRUE, labels=FALSE,
                   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
-                  ccode=defaultcountrycode(), startPeriod=NULL,endPeriod=NULL,verbose=FALSE) {
-if (missing(code)) return(helpmdStat())
+                  ccode=getOption('defaultcountrycode','EC'), startPeriod=NULL,endPeriod=NULL,verbose=FALSE) {
+  if (missing(code)) return(helpmdStat())
   if (match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$overview[[1]],nomatch=0)) {
     mout=.sdmxasmd3(code,drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
   } else {
-    if (any(grepl('ameco',tolower('code')))) {stop('Ameco not available via this route. Try function mdAmeco, or helpAmeco()')}
-    if (any(grepl('nomics',tolower('code')))) {stop('DBnomics not available via this route. Try function Nomics, or helpNomics()')}
-    if (any(grepl('WEO',tolower('code')))) {stop('IMF WEO not available via this route. Try function mdWEO, or helpWEO()')}
-
-    if (any(grepl('FRED',tolower('code')))) {stop('FRED of the St. Louis Fed is yet not available. Keep a watch on this package though, it is the next in line')}
     stop('Provider not available')
   }
   MD3:::.getas(mout,as[[1L]])
@@ -446,7 +441,24 @@ if (missing(code)) return(helpmdStat())
 
 #' @rdname mdsdmx
 #' @export
-mdStat = mdsdmx
+mdStat = function(code, drop=TRUE, labels=FALSE,
+                    as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
+                    ccode=getOption('defaultcountrycode','EC'), startPeriod=NULL,endPeriod=NULL,verbose=FALSE) {
+  if (missing(code)) return(helpmdStat())
+  ixprov=match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$overview[[1]],nomatch=0)
+  if (ixprov>0) {
+    if (.mdstats_providers$overview[['PrimType']][ixprov]=='function') {
+      return(get(.mdstats_providers$overview[['DataProcessingFunction']][ixprov])(code=code,drop=drop,labels=labels,as=as,ccode=ccode,startPeriod=startPeriod,endPeriod=endPeriod,verbose=verbose))
+
+    }
+    mout=.sdmxasmd3(code,drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
+  } else {
+    if (any(grepl('nomics',tolower('code')))) {stop('DBnomics not available via this route. Try function Nomics, or helpNomics()')}
+    if (any(grepl('fred',tolower('code')))) {stop('FRED of the St. Louis Fed is yet not available. Keep a watch on this package though, it is the next in line')}
+    stop('Provider not available')
+  }
+
+}
 
 
 
@@ -808,7 +820,39 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 #' helpmdStat('BIS/WS_SPP/Q.FRA.N.')
 #'
 #' @export
-helpmdStat =.helpsdmx
+helpmdStat = function(query='', pattern = "", dim = NULL, verbose = TRUE){
+  query=trimws(query[1])
+  if (nchar(query)) {
+    sprov=.fixSdmxCode(query,asvector = TRUE)[[1]]
+
+    stype=.mdstats_providers$overview[sprov,'PrimType']
+    if (is.na(stype)) return(.helpsdmx(query,pattern,dim,verbose))
+    if (grepl('SDMX',stype,ignore.case = TRUE)) return(.helpsdmx(query,pattern,dim,verbose))
+    return(get(.mdstats_providers$overview[sprov,'PrimRepoUrl'])(query,pattern,dim,verbose,sdmxlike=TRUE))
+  }
+
+  temp=.mdstats_providers$overview
+
+  temp[is.na(temp[,'PrimType']),'PrimType']=''
+  ix=(temp[,'PrimType']=='') | grepl('SDMX',temp[,'PrimType'],ignore.case = TRUE)
+  temp[!ix,1]=paste0(temp[!ix,1],'*')
+
+
+  if (!nchar(pattern)) {
+    cat('The following SDMX providers are available: \n')
+    cat(capture.output(print(temp[,c(1,2,4)])),sep = '\n')
+    cat('\nTo see which dataflows are available e.g. for provider BIS, run helpmdStat("BIS") \n')
+    return(invisible(temp))
+  }
+  tempix=apply(.mdstats_providers$overview[,1:7],1,function(x) any(grepl(pattern,x,ignore.case = TRUE)))
+  if (!any(tempix)) {cat('No provider matching your pattern "',pattern,'" has been found.\n'); return(character())}
+  cat('The following SDMX providers match pattern: "',pattern, '"\n',sep='')
+  cat(capture.output(print(temp[tempix,c(1,2,4)])),sep = '\n')
+  cat('\nTo see which dataflows are available e.g. for provider ',.mdstats_providers$overview[which(tempix)[1],1],
+      ', run helpmdStat("',.mdstats_providers$overview[which(tempix)[1],1],'") \n',sep='')
+  return(invisible(temp))
+
+}
 
 
 .cachelocation = function(usestored=FALSE) {

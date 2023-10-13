@@ -103,8 +103,10 @@
 #' @param ccode If not \code{ccode==NULL}, then the function attempts to convert to ccode destination such as 'iso2c', 'EC', 'iso3c'. See \code{\link[MDcountrycode]{ccode}} for permissible values.  \code{\link[MDcountrycode]{defaultcountrycode}} for defining this value as a session-wide option.
 #' @param startPeriod startyear (1960 if empty)
 #' @param endPeriod end year (latest available if left empty)
+#' @param nbdim number of dimensions to return: either \code{3} for COUNTRY, VARIABLE and TIME, where VARIABLE denotes codes such as \code{1_0_99_0_UVGD}, \code{'4'} for splitting VARIABLE into TRAFO (like \code{1_0_99_0}) and INDICATOR (like \code{UVGD}), \code{7} for splitting TRAFO further into its 4 subcomponents
 #' @param inclaggreg default FALSE. In that case, if all countries are requested, the function returns individual counties as well as the latest EU and EA aggregate. If TRUE, it also returns other aggregates from Ameco, such as EA12.
 #' @param verbose not active
+#' @param \ldots further arguemtns passed from mdStat
 #' @return an md3 object or other as specified by \code{as}
 #' @details This function works by caching Ameco vintages on the local drive
 #' @seealso \code{\link{mdStat}} for loading from major data sources
@@ -124,10 +126,14 @@
 #'
 #' @export
 mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data.table","zoo","2d","1d"),
-                   drop=TRUE, ccode=defaultcountrycode(), startPeriod=NULL, endPeriod=NULL, inclaggreg=FALSE,verbose=TRUE) {
+                   drop=TRUE, ccode=getOption('defaultcountrycode','EC'), startPeriod=NULL, endPeriod=NULL,
+                   nbdim=3,inclaggreg=FALSE,verbose=TRUE,...) {
 
   if (length(code)>1) { warning('code has to be singleton'); code=code[1]}
-  if (is.character(code)) if (nchar(code[1])==0) code=character()
+  if (is.character(code)) {
+    if (any(grepl('/',code))) code=gsub('^.*/','',code)
+    if (nchar(code[1])==0) code=character() else { code=gsub('_','.',code)}
+  }
   if (length(code)) {
     nbpoints=nchar(gsub("[^\\.]","",code))
     if (nbpoints==5) {
@@ -162,17 +168,39 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
   }
   if (!length(code)) return(tempameco)
   if (!missing(startPeriod)) { startPeriod=as.integer(startPeriod)  }
-  if (!missing(startPeriod)) { endPeriod=as.integer(endPeriod)  }
+  if (!missing(endPeriod)) { endPeriod=as.integer(endPeriod)  }
   timeper=paste0('.',ifelse(length(startPeriod),startPeriod,""),":",ifelse(length(endPeriod),endPeriod,""))
   if (timeper=='.:') timeper='.'
 
   if (nchar(timeper)>7) if (endPeriod<startPeriod) {stop('startPeriod cant be after endPeriod')}
-  mout=MD3:::.md3get(tempameco,paste(code,timeper),drop = drop)
+  mout=MD3:::.md3get(tempameco,paste(code,timeper),drop = FALSE)
   if (length(ccode)) { mout=.countrycodefixer(mout,NULL,'GEO',ccode)}
-  MD3:::.getas(mout,as)
+  if (nbdim==4) {
+    if (drop) mout=MD3:::drop.md3(mout)
+    return(MD3:::.getas(mout,as))
+  }
+  if (nbdim==3) {
+   # browser()
+    dout=MD3:::.dt_class(mout)
+    dout=data.table::copy(dout)
+     dout[['VARIABLE']] = paste0(dout[['TRAFO']],'_',dout[['INDICATOR']])
+     dout=dout[,c('GEO','VARIABLE','TIME','_.obs_value'),with=FALSE]
+     dnm= unique(dout[['VARIABLE']]) #attr(dout,'dcstruct')
+     tempvbl=data.frame(dnm,attr(dout,'dcstruct')[['INDICATOR']][gsub('^.*_','',dnm),2],stringsAsFactors = FALSE)
+     colnames(tempvbl)=c('code','label:en'); rownames(tempvbl)=dnm
+
+     mydc=list(GEO=attr(dout,'dcstruct')[['GEO']],VARIABLE=tempvbl,TIME=attr(dout,'dcstruct')[['TIME']])
+      attr(dout,'dcstruct')=NULL
+     rm(mout); mout=data.table::copy(dout)
+     mout=MD3:::.md3_class(mout);
+     attr(mout,'dcstruct') = mydc
+     if (drop) mout=MD3:::drop.md3(mout)
+     return(MD3:::.getas(mout,as))
+  }
+  stop('not implemented yet')
 }
 
-helpmdAmeco = function(query='', pattern = "", dim = NULL, verbose = TRUE) {
+.helpmdAmeco = function(query='', pattern = "", dim = NULL, verbose = TRUE, sdmxlike=FALSE, ...) {
   #stop("helpmdAmeco not  ready yet")
   vcode=suppressWarnings(.fixSdmxCode(query))
   vcode=vcode[nchar(vcode)>0]

@@ -105,6 +105,7 @@
 #' @param ccode If not \code{ccode==NULL}, then the function attempts to convert to ccode destination such as 'iso2c', 'EC', 'iso3c'. See \code{\link[MDcountrycode]{ccode}} for permissible values.  \code{\link[MDcountrycode]{defaultcountrycode}} for defining this value as a session-wide option.
 #' @param startPeriod startyear (1960 if empty)
 #' @param endPeriod end year (latest available if left empty)
+#' @param \ldots further arguments passed from mdStat
 #' @return an md3 object or other as specified by \code{as}
 #' @details This function works by caching IMF WEO vintages on the local drive
 #' @seealso \code{\link{mdStat}} for loading from major data sources
@@ -121,10 +122,13 @@
 #' @export
 mdWEO = function(code=NULL,year=0,release=0,
                   as=c("md3", "array", "numeric","data.table","zoo","2d","1d"),
-                  drop=TRUE,ccode=defaultcountrycode(),startPeriod,endPeriod) {
+                  drop=TRUE,ccode=getOption('defaultcountrycode','EC'),startPeriod,endPeriod,...) {
   tempweo=.mdstats_providers$cachedmd3s(paste0('WEO',year,release))
   if (is.null(tempweo)) tempweo=.mdstats_providers$cachedmd3s(.parseWEO(year=year,release = release),paste0('WEO',year,release))
-  if (is.character(code)) if (nchar(code)==0) code=character()
+  if (is.character(code)) {
+    if (any(grepl('/',code))) code=gsub('^.*/','',code)
+    if (nchar(code)==0) code=character()
+  }
   if (!length(code)) {
     if (length(ccode)) { tempweo=.countrycodefixer(tempweo,NULL,'COUNTRY',ccode)}
     return(tempweo)
@@ -144,23 +148,11 @@ mdWEO = function(code=NULL,year=0,release=0,
 }
 
 
-helpmdWEO = function(code){
-  # dctry=read.table(.mdWEOfilepath(0, 0, FALSE, TRUE),sep="\t",head=TRUE,
-  #               stringsAsFactors=FALSE,fill=TRUE,na.strings=c("n/a",""),comment.char="",quote="\"",skipNul = TRUE,
-  #               check.names = FALSE)
-  # #dgrp=read.table(.mdWEOfilepath(0, 0, FALSE, TRUE),sep="\t",head=TRUE,
-  #                  stringsAsFactors=FALSE,fill=TRUE,na.strings=c("n/a",""),comment.char="",quote="\"",skipNul = TRUE,
-  #                  check.names = FALSE)
-  cat('proper help not avaialble yet. The structure is COUNTRY.SUBJECT.TIME\nList of SUBJECT indicators:\n')
-  cat(capture.output(MD3:::.getdimcodes(mdWEO())[['SUBJECT']]),sep='\n')
-}
 
 
 
 
-
-
-helpmdWEO = function(query='', pattern = "", dim = NULL, verbose = TRUE) {
+.helpmdWEO = function(query='', pattern = "", dim = NULL, verbose = TRUE, sdmxlike=FALSE, ...) {
   #stop("helpmdAmeco not  ready yet")
   vcode=suppressWarnings(.fixSdmxCode(query))
   vcode=vcode[nchar(vcode)>0]
@@ -209,9 +201,14 @@ helpmdWEO = function(query='', pattern = "", dim = NULL, verbose = TRUE) {
 
   }
 
-
+  if (vcode[1]=='IMFWEO') {vcode=character()}
   if (!length(vcode)) {
-    cat('\nAmeco has the following dimensions excl TIME:\n')
+    if (sdmxlike) {
+      cat('\nIMFWEO has only one dataflow available via mdStat: "IMFWEO/WEO"\n')
+      cat('It may be used like mdStat("IMFWEO/WEO/FRA.NGDP")\n')
+      cat('Use function mdWEO() for more options, in particular to retrieve earlier vintages \n')
+    }
+    cat('\nWEO has the following dimensions excl TIME:\n')
     cat('COUNTRY, SUBJECT\n')
     cat('A typical request would look like mdWEO("AUT.NGDP")\n')
     cat('Run e.g. helpmdWEO(dim="SUBJECT", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension SUBJECT')
