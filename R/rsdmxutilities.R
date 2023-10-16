@@ -33,6 +33,9 @@
 
   }
 
+  
+  oProvs@providers[[which(idProvs=='EC_COMEXT')]]@builder@handler$datastructure = function (obj){ if (is.null(obj@resourceId))  obj@resourceId = "all";  if (is.null(obj@version))  obj@version = "latest";  req <- sprintf("https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/datastructure/ALL/%s", obj@resourceId);  req <- paste0(req, "?references=children");  return(req)}
+    
   oProvs@providers[[which(idProvs=='EC_COMP')]]@builder@handler$datastructure = function (obj){ if (is.null(obj@resourceId))  obj@resourceId = "all";  if (is.null(obj@version))  obj@version = "latest";  req <- sprintf("%s/datastructure/COMP/%s/%s/", obj@regUrl, obj@resourceId, obj@version);  req <- paste0(req, "?references=children");  return(req)}
   oProvs@providers[[which(idProvs=='EC_GROW')]]@builder@handler$datastructure = function (obj){ if (is.null(obj@resourceId))  obj@resourceId = "all";  if (is.null(obj@version))  obj@version = "latest";  req <- sprintf("%s/datastructure/GROW/%s/%s/", obj@regUrl, obj@resourceId, obj@version);  req <- paste0(req, "?references=children");  return(req)}
 
