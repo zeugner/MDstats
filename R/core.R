@@ -453,6 +453,7 @@ mdStat = function(code, drop=TRUE, labels=FALSE,
 
     }
     mout=.sdmxasmd3(code,drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
+    return(MD3:::.getas(mout,as))
   } else {
     if (any(grepl('nomics',tolower('code')))) {stop('DBnomics not available via this route. Try function Nomics, or helpNomics()')}
     if (any(grepl('fred',tolower('code')))) {stop('FRED of the St. Louis Fed is yet not available. Keep a watch on this package though, it is the next in line')}
