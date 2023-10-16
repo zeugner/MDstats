@@ -447,7 +447,8 @@ mdStat = function(code, drop=TRUE, labels=FALSE,
   if (missing(code)) return(helpmdStat())
   ixprov=match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$overview[[1]],nomatch=0)
   if (ixprov>0) {
-    if (.mdstats_providers$overview[['PrimType']][ixprov]=='function') {
+    provtype=.mdstats_providers$overview[['PrimType']][ixprov]; if (is.na(provtype)) provtype=''
+    if (provtype=='function') {
       return(get(.mdstats_providers$overview[['DataProcessingFunction']][ixprov])(code=code,drop=drop,labels=labels,as=as,ccode=ccode,startPeriod=startPeriod,endPeriod=endPeriod,verbose=verbose))
 
     }
