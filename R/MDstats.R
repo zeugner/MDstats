@@ -27,7 +27,7 @@
 NULL
 
 .onLoad = function (libname, pkgname) {
-  require(data.table); require(XML); require(MD3)
+  #require(data.table); require(XML); require(MD3)
   #message(libname,pkgname)
 
   #warning('provtbl ',exists('providertable', envir = topenv()))
@@ -39,3 +39,4 @@ NULL
 
 }
 
+require(data.table); require(rsdmx); require(MDcountrycode); require(MD3)

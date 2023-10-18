@@ -941,3 +941,9 @@ helpmdStat = function(query='', pattern = "", dim = NULL, verbose = TRUE){
   if (MD3:::.md3_is(inmd3ordt))  y=MD3:::.md3_class(y)
   return(y)
 }
+
+
+
+
+
+#https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/dataflow/ESTAT/namq_10_gdp/latest?detail=referencepartial&references=descendants
