@@ -64,11 +64,11 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
   outlist$sayah = function() message("ah")
   outlist$overview=.dprovs
   outlist$alias = function(x) {if (!length(valiases)) {valiases<<- .buildaliases()}; gout=unname(valiases[toupper(gsub('/.*$','',x))]); if (!anyNA(gout)) {return(gout)}; warning('Provider ',gsub('/.*$','',x), ' not available from mdStats'); return(x)}
-  outlist$dataflows = function(sprovider) {
+  outlist$dataflows = function(sprovider,verbose=TRUE) {
     sprovider=valiases[toupper(sprovider)]
     if (!NROW(ldf[[sprovider]])) {
       message('loading dataflows from ',sprovider, ', this might take some time')
-      ldf[[sprovider]] <<- .fetchDataflows(sprovider)
+      ldf[[sprovider]] <<- .fetchDataflows(sprovider,verbose=verbose)
     }
     ldf[[sprovider]]
   }
@@ -278,8 +278,9 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
 
 
 
-.fetchDataflows = function(sprovider) {
+.fetchDataflows = function(sprovider,verbose=TRUE) {
   if (is.character(sprovider)) {
+    if (verbose) cat('\nReading from ',.mdstats_providers$overview[sprovider,'PrimDataFlows'],'\n')
     oflows=rsdmx::readSDMX(.mdstats_providers$overview[sprovider,'PrimDataFlows'])
   } else {
     oflows = sprovider
@@ -616,7 +617,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
         cat('It has the following elements in dimension "',dim,'":\n',sep='')
         browser()
         if (is.na(match(dim,names(mydc)))) {
-          mytbl=.fetchfullcodelists(paste0(vq[[1]],'/',vq[[2]]))[[dim]]
+          mytbl=.fetchfullcodelists(paste0(vq[[1]],'/',vq[[2]]),verbose = verbose)[[dim]]
         } else {
         mytbl=mydc[[dim]]
         }
@@ -639,7 +640,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
     if (length(codeshere)!=length(mydims)) { stop('Your query ', query, ' suggests that the dataflow ', vq[1],'/',vq[2],' has ',
                                 length(codeshere),' dimensions. But ', vq[2], ' contains ',length(mydims), 'dimensions.')}
 
-    fcl=.fetchfullcodelists(paste0(vq[1],'/',vq[2]))
+    fcl=.fetchfullcodelists(paste0(vq[1],'/',vq[2]),verbose = verbose)
 
     for (i in seq_along(codeshere)) {
       thismatch=match(trimws(codeshere[[i]]),fcl[[i]],nomatch=NA)
@@ -660,7 +661,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 
   if (length(dim)) {
     #its about a dimension:
-    mydn=.fetchfullcodelists(paste0(vq[1],'/',vq[2]))
+    mydn=.fetchfullcodelists(paste0(vq[1],'/',vq[2]),verbose = verbose )
     if (is.character(dim)){
       mydim=mydn[[match(tolower(dim),tolower(names(mydn)),nomatch=NA)]]
     } else {
