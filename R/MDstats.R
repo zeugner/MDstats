@@ -26,7 +26,7 @@
 #' @name MDstats
 NULL
 
-.onLoad = function (libname, pkgname) {
+#.onLoad = function (libname, pkgname) {
   #require(data.table); require(XML); require(MD3)
   #message(libname,pkgname)
 
@@ -38,7 +38,7 @@ NULL
 
   # .rsdmxfixer()
 
-}
+#}
 
 
 require(data.table);  require(MDcountrycode); require(MD3)

@@ -163,8 +163,7 @@
 
 
 
-
-.onAttach =function(...) {
+.onLoad = function (libname, pkgname) {
   require(rsdmx);
   .rsdmxfixer()
 }
