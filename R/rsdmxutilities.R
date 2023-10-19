@@ -3,7 +3,7 @@
 .rsdmxfixer = function () {
   if (!require(rsdmx)) stop('needs packages rsdmx installed')
 
-  utils::data('providertable')
+  suppressWarnings(utils::data('providertable'))
   .dprovs =  providertable #.loadproviders()
   oProvs=rsdmx::getSDMXServiceProviders()
   #oProvs@providers[[2]]@builder@regUrl<- "https://data-api.ecb.europa.eu/service"

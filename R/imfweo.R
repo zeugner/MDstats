@@ -82,7 +82,7 @@
   ddd=data.table(jj[,c(grep('^ISO$',names(jj)),grep('Subject.*ode',names(jj)),grep('^[0-9]*$',names(jj)))])
   #yyy=names(ddd)[-(1:2)]
   #yy2=as.timo(yyy); names(yy2)=yyy
-  ddd=ddd[!is.na(ddd[[1]]) & !is.na(ddd[[2]])]
+  ddd=ddd[!is.na(ddd[[1]]) & !is.na(ddd[[2]]),]
   dstacked=data.table::melt(data.table(ddd),id.vars=1:2, value.name = MD3:::.md3resnames('value'),variable.factor=FALSE)
   colnames(dstacked)[1:3]=c('COUNTRY','SUBJECT','TIME')
   dstacked=data.table::copy(dstacked[!is.na(dstacked[[4]])])
