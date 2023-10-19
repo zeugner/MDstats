@@ -57,7 +57,7 @@
 
   d2d=cbind(tempcodes,dameco[,grepl('^[0-9]*$',colnames(dameco)),with=FALSE])
   dstacked=data.table::melt(d2d,id.vars=1:3, variable.name='TIME', value.name = MD3:::.md3resnames('value'), variable.factor=FALSE,na.rm = TRUE)
-   dstacked[,TIME:=MD3:::as.timo(TIME)]
+   dstacked[['TIME']]=MD3:::as.timo(dstacked[['TIME']])
 
 
    clc=cbind(tempcodes[,1],`label:en`=dameco[,list(COUNTRY)]); clc=as.data.frame(clc[!duplicated(clc[[1]])])
