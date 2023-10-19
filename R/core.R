@@ -727,7 +727,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 
 
 
-  dfinfo=suppressWarnings(try(MD3:::.NomicmdStataflowinfo(.mdstats_providers$overview[vq[1],'nomicsID'],vq[[2]]),silent=TRUE))
+  dfinfo=suppressWarnings(try(MD3:::.Nomicsdataflowinfo(.mdstats_providers$overview[vq[1],'nomicsID'],vq[[2]]),silent=TRUE))
 
   if (!any(grepl('err',class(dfinfo)))) {
     xmpl = dfinfo$example_query
