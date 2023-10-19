@@ -35,8 +35,10 @@ NULL
   #assign('providertable',  envir = topenv())
 
   # assign('.mdstats_providers', .mdstats_providerscreate(providertable), envir = topenv())
+
   # .rsdmxfixer()
 
 }
 
-require(data.table); require(rsdmx); require(MDcountrycode); require(MD3)
+
+require(data.table);  require(MDcountrycode); require(MD3)
