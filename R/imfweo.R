@@ -166,7 +166,7 @@ mdWEO = function(code=NULL,year=0,release=0,
     if (grepl('^geo|^cou',tolower(dim))) { dim='COUNTRY'}
     if (grepl('^indic|^varia|^subj',tolower(dim))) { dim='SUBJECT'}
     if (!(dim %in% c('COUNTRY','SUBJECT'))) stop('dimension ',dim,' is not available from IMF WEO')
-    thatweo=names(.mdstats_providers$cachedmd3s()); thatweo=thatweo[grepl('WEO',thatweo)][1]
+    thatweo=names(.mdstats_providers$cachedmd3s()); thatweo=thatweo[grepl('WEO',thatweo)][1]; if (anyNA(thatweo)) {thatweo=NULL}
     if (!length(thatweo)) { temp=mdWEO(); thatweo='WEO00' }
     odn=MD3:::.getdimcodes(.mdstats_providers$cachedmd3s(thatweo))
     odn=odn[[dim]]
