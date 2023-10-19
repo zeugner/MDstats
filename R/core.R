@@ -259,7 +259,9 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
     mout=MD3:::.setdimcodes(mout,mydc)
   }
   if (drop) mout=MD3:::drop.md3(mout)
-  if (!is.null(ccode)) mout=.countrycodefixer(mout,tocode = ccode,whichdim=.findgeodim(possdn,.fixSdmxCode(mycode)[[1]]))
+  if (!length(ccode)) return(mout)
+  ixgeodim=intersect(names(attr(mout,'dcstruct')),.findgeodim(possdn,.fixSdmxCode(mycode)[[1]]))
+  if (length(ixgeodim)) mout=.countrycodefixer(mout,tocode = ccode,whichdim=ixgeodim)
   mout
 }
 
