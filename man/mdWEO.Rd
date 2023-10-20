@@ -10,9 +10,10 @@ mdWEO(
   release = 0,
   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d"),
   drop = TRUE,
-  ccode = defaultcountrycode(),
+  ccode = getOption("defaultcountrycode", "EC"),
   startPeriod,
-  endPeriod
+  endPeriod,
+  ...
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ mdWEO(
 \item{startPeriod}{startyear (1960 if empty)}
 
 \item{endPeriod}{end year (latest available if left empty)}
+
+\item{\ldots}{further arguments passed from mds}
 }
 \value{
 an md3 object or other as specified by \code{as}
@@ -53,5 +56,5 @@ foo[DE+ES.NGDP.] #German and Spanish  GDP
 
 }
 \seealso{
-\code{\link{mdStat}} for loading from major data sources
+\code{\link{mds}} for loading from major data sources
 }

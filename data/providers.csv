@@ -25,3 +25,5 @@ INEGI,Instituto Nacional de Estadística y Geografía (Méjico),MEX,MX,NSI,,http
 ONS_NOMIS,NOMIS - UK Official Labour Market Statistics,UK,UK,NSI,,https://www.nomisweb.co.uk/api/v01,,https://www.nomisweb.co.uk/api/v01/data,,,,,,None,https://www.nomisweb.co.uk/api/v01/dataflow/,,,,,,,,,,,,,,,,,,
 NCSI,Sultanate of Oman - National Center for Statistics & Information,OMN,OM,NSI,,https://data.gov.om/api/1.0/sdmx,,https://data.gov.om/api/1.0/sdmx/data/,,,,,,None,https://data.gov.om/api/1.0/sdmx/dataflow/,,,,,,,,,,,,,,,,,,
 KNOEMA,KNOEMA knowledge plateform,,FR,PRIV,,http://knoema.fr/api/1.0/sdmx,,http://knoema.fr/api/1.0/sdmx/data/,,,,,,None,http://knoema.fr/api/1.0/sdmx/dataflow/,,,,,,,,,,,,,,,,,,
+IMFWEO,"IMF World economic outlook, using function mdWEO",WEO,1A,INTORG,,.helpmdWEO,function,,,,,,mdWEO,,,,,,,,,,,,,,,,,,,,
+AMECO,EC ECFIN AMECO database,EC_AMECO,EU,EUORG,,.helpmdAmeco,function,,,,,,mdAmeco,,,,,,,,,,,,,,,,,,,,

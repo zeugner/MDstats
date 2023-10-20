@@ -10,11 +10,13 @@ mdAmeco(
   release = 0,
   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d"),
   drop = TRUE,
-  ccode = defaultcountrycode(),
+  ccode = getOption("defaultcountrycode", "EC"),
   startPeriod = NULL,
   endPeriod = NULL,
+  nbdim = 3,
   inclaggreg = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
@@ -34,9 +36,13 @@ mdAmeco(
 
 \item{endPeriod}{end year (latest available if left empty)}
 
+\item{nbdim}{number of dimensions to return: either \code{3} for COUNTRY, VARIABLE and TIME, where VARIABLE denotes codes such as \code{1_0_99_0_UVGD}, \code{'4'} for splitting VARIABLE into TRAFO (like \code{1_0_99_0}) and INDICATOR (like \code{UVGD}), \code{7} for splitting TRAFO further into its 4 subcomponents}
+
 \item{inclaggreg}{default FALSE. In that case, if all countries are requested, the function returns individual counties as well as the latest EU and EA aggregate. If TRUE, it also returns other aggregates from Ameco, such as EA12.}
 
 \item{verbose}{not active}
+
+\item{\ldots}{further arguemtns passed from mds}
 }
 \value{
 an md3 object or other as specified by \code{as}
@@ -63,5 +69,5 @@ foo=mdAmeco()
 
 }
 \seealso{
-\code{\link{mdStat}} for loading from major data sources
+\code{\link{mds}} for loading from major data sources
 }

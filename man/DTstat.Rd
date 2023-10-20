@@ -15,7 +15,7 @@ DTstat(
 )
 }
 \arguments{
-\item{code}{a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See \code{\link{mdsdmx}} for details}
+\item{code}{a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See \code{\link{mdSdmx}} for details}
 
 \item{reshape}{a formula combining dimension names in order to reshape the result. Default is \code{...~ TIME} which means each time period to be in a column, plus extra identifier columns at the beginning. See \code{\link[data.table]{dcast}} for details.}
 
@@ -36,15 +36,15 @@ a \code{data.table}
 Get data from an SDMX source as a data.table
 }
 \details{
-This function tweaks the package \code{rsdmx}  to load data. For formulating SDMX query codes, check \code{help(\link{mdsdmx})}
+This function tweaks the package \code{rsdmx}  to load data. For formulating SDMX query codes, check \code{help(\link{mdSdmx})}
 }
 \examples{
-mdsdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
-mdsdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",as = 'zoo')
+mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
+mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",as = 'zoo')
 
-o1=mdsdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
+o1=mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
 dimcodes(o1)
 }
 \seealso{
-\code{\link{helpmdStat}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
+\code{\link{helpmds}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
 }

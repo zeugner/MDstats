@@ -1,23 +1,22 @@
-#' @include data.R
-#'
-#' MDstats: A package providing for multi-dimensional data manipulation
+#' MDstats: A package providing for loading rom SDMX and other macro data sources for multi-dimensional data manipulation
 #'
 #'
 #'
 #' @section MDstats functionality:
-#' Blabla
+#' Use function \code{mds} and function \code{helpmds} to access all
 #'
 #' @section Further work:
 #'
 #'
 #' This package is still under development; there are certainly some bugs lurking around
 #'
+#'
 #' Conversion to and from \code{data.table}, tibble, and \code{pdata.frame} is to be added
 #'
 #' @section Author:
 #' Stefan Zeugner ECFIN.B1
-#'
-#' @import data.table
+#
+#' @import utils
 #' @import bit64
 #' @import XML
 #' @import rsdmx

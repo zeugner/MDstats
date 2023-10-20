@@ -1,9 +1,8 @@
-#' @include data.R
-
+#' @include core.R
 .rsdmxfixer = function () {
   if (!require(rsdmx)) stop('needs packages rsdmx installed')
 
-  suppressWarnings(utils::data('providertable'))
+  #suppressWarnings(utils::data('providertable'))
   .dprovs =  providertable #.loadproviders()
   oProvs=rsdmx::getSDMXServiceProviders()
   #oProvs@providers[[2]]@builder@regUrl<- "https://data-api.ecb.europa.eu/service"
@@ -162,9 +161,18 @@
 }
 
 
+providertable=NULL
 
 .onLoad = function (libname, pkgname) {
   require(rsdmx);
+
+  utils::data("providertable", package=pkgname, envir=parent.env(environment()))
+  providertable<<-.dprovs
   .rsdmxfixer()
+
+
 }
 
+if (!exists('.mdstats_providers')) .mdstats_providers = .mdstats_providerscreate(providertable)
+#providertable=.dprovs
+#.mdstats_providers=.mdstats_providerscreate(providertable)

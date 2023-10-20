@@ -1,6 +1,5 @@
-#' @include data.R
 
-library(data.table);library(XML);library(rsdmx); library(MD3)
+#library(data.table);library(XML);library(rsdmx); library(MD3)
 #  .loadproviders=function() {
 #    providertable=utils::read.csv('data/providers.csv',stringsAsFactors = FALSE,header = TRUE, na.strings='')
 #    rownames(providertable) = providertable[[1]]
@@ -10,7 +9,8 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
 # }
 .mdstats_providerscreate=function(.dprovs=NULL){
   #.dprovs =  data.loadproviders()
-  if (!length(.dprovs))  {utils::data('providertable'); .dprovs=providertable}  #.loadproviders()
+  #if (!length(.dprovs))  {utils::data('providertable'); .dprovs=providertable}  #.loadproviders()
+  if (!length(.dprovs))  {.dprovs=providertable}  #.loadproviders()
   #colnames(.dprovs)[[1]]='AgencyID'; rownames(.dprovs)=.dprovs[[1]]
 
 
@@ -127,8 +127,6 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
   }
   return(outlist)
 }
-
-
 
 
 .stackedsdmx =function(mycode,justurl=FALSE,justxml=FALSE,verbose=FALSE) {
@@ -329,16 +327,24 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
     return(mydn)
   }
   o0=oo@codelists@codelists
+
   o0=o0[unlist(lapply(oo@codelists@codelists,function(x) length(x@Code)))>0]
+  olabels =lapply(o0,function(x) unlist(x@Name))
+  olabels =lapply(olabels,function(x) trimws(gsub('code {0,1}list', '',x)))
+  for (j in seq_along(olabels)) {
+    names(olabels[[j]]) = paste0("label:",names(o0[[j]]@Name))
+  }
+
 
   o3=lapply(o0, function(z) {tump=unlist(lapply(z@Code,function(y) {templabel=unlist(y@label); names(templabel)=paste0('label:',names(templabel)); return(c(code=y@id,templabel))} ));tomp=matrix(tump,ncol=1+length(z@Code[[1]]@label),byrow=TRUE); colnames(tomp)=c('code',paste0('label:',names(z@Code[[1]]@label)));rownames(tomp)=tomp[,1]; return(tomp)})
-  names(o3)= lapply(o0, function(z) z@id)
+  names(olabels)=names(o3)= lapply(o0, function(z) z@id)
   o3=o3[gsub('^.*/','',o1)]
-
+  olabels=olabels[names(o3)]
   o3=lapply(o3,function(x) {if (!any('label:en'==colnames(x))) return(x); if (which('label:en'==colnames(x))==2) { return(x) }; return(x[,c('code','label:en',setdiff(colnames(x),c('code','label:en')))])})
-  names(o3) = names(o1)
+  names(olabels) = names(o3) = names(o1)
   for (i in names(o3)) {
     attr(o3[[i]],'codelist') = unname(o1[i])
+    attr(o3[[i]],'label')  = olabels[[i]]
   }
 
   o3
@@ -389,9 +395,9 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
 #' @section SDMX query:
 #' A restful SDMX query combines Provider, Dataflow and Dimension selectors. Take the example 'ECB/EXR/A.GBP+CHF.EUR.SP00.A'
 #' \itemize{
-#'   \item 'ECB' designates the provider ECB (see helpmdStat() for a list of providers)
-#'   \item 'EXR' designates the ECB's dataflow 'EXR' about exchange rates (see helpmdStat('ECB') for a list of ECB dataflows)
-#'   \item A.GBP+CHF.EUR.SP00.A is the dimension selector: See helpmdStat('ECB/EXR') for what dimensions exist in ECB/EXR)
+#'   \item 'ECB' designates the provider ECB (see helpmds() for a list of providers)
+#'   \item 'EXR' designates the ECB's dataflow 'EXR' about exchange rates (see helpmds('ECB') for a list of ECB dataflows)
+#'   \item A.GBP+CHF.EUR.SP00.A is the dimension selector: See helpmds('ECB/EXR') for what dimensions exist in ECB/EXR)
 #' }
 #' Here,
 #' \itemize{
@@ -405,33 +411,33 @@ library(data.table);library(XML);library(rsdmx); library(MD3)
 #' Note that a query is normally taken as Provider/Dataflow/Selectors. The combination with dots Provider.Dataflow.Selectors is not tolerated here.
 #' Note that dataflow codes may be case-sensitive
 #'
-#' To see which providers are avaialble, and to find query codes, use \code{\link{helpmdStat}}, or check the websites of the providers, such as \url{https://data.ecb.europa.eu/data/datasets}. Looking on \url{https://db.nomics.world} is a faster alternative for many providers.
+#' To see which providers are avaialble, and to find query codes, use \code{\link{helpmds}}, or check the websites of the providers, such as \url{https://data.ecb.europa.eu/data/datasets}. Looking on \url{https://db.nomics.world} is a faster alternative for many providers.
 #'
-#' \code{mdsdmx} is a function for loading from SDMX data sources. \code{mdStat} encompasses that one, and will be broadened to other data sources at a later stage.
-#' @seealso \code{\link{helpmdStat}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
+#' \code{mdSdmx} is a function for loading from SDMX data sources. \code{mds} encompasses that one, and will be broadened to other data sources at a later stage.
+#' @seealso \code{\link{helpmds}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
 #' @examples
-#' mdsdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
-#' mdsdmx("ECB/EXR/Q.PLN+CZK+SEK.EUR.SP00.A",as = '2d')
+#' mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
+#' mdSdmx("ECB/EXR/Q.PLN+CZK+SEK.EUR.SP00.A",as = '2d')
 #'
-#' o1=mdsdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
+#' o1=mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
 #' dimcodes(o1)
 #'
 #'
-#' mdsdmx("OECD/EO/AUT+FRA.GDP.Q")
-#' foo=mdStat("ESTAT/prc_hpi_q/Q..I15_Q.")
+#' mdSdmx("OECD/EO/AUT+FRA.GDP.Q")
+#' foo=mds("ESTAT/prc_hpi_q/Q..I15_Q.")
 #'
 #' foo[AT:BG.TOTAL.y2020:y]
 #'
-#' mdsdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
-#' mdStat('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
+#' mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
+#' mds('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 #'
-#' mdsdmx("BIS/WS_EER_M/M.N.B.AT+FR+BE")
+#' mdSdmx("BIS/WS_EER_M/M.N.B.AT+FR+BE")
 #'
 #' @export
-mdsdmx = function(code, drop=TRUE, labels=FALSE,
+mdSdmx = function(code, drop=TRUE, labels=FALSE,
                   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
                   ccode=getOption('defaultcountrycode','EC'), startPeriod=NULL,endPeriod=NULL,verbose=FALSE) {
-  if (missing(code)) return(helpmdStat())
+  if (missing(code)) return(helpmds())
   if (match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$overview[[1]],nomatch=0)) {
     mout=.sdmxasmd3(code,drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
   } else {
@@ -442,12 +448,12 @@ mdsdmx = function(code, drop=TRUE, labels=FALSE,
 }
 
 
-#' @rdname mdsdmx
+#' @rdname mdSdmx
 #' @export
-mdStat = function(code, drop=TRUE, labels=FALSE,
+mds = function(code, drop=TRUE, labels=FALSE,
                     as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
                     ccode=getOption('defaultcountrycode','EC'), startPeriod=NULL,endPeriod=NULL,verbose=FALSE) {
-  if (missing(code)) return(helpmdStat())
+  if (missing(code)) return(helpmds())
   ixprov=match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$overview[[1]],nomatch=0)
   if (ixprov>0) {
     provtype=.mdstats_providers$overview[['PrimType']][ixprov]; if (is.na(provtype)) provtype=''
@@ -470,7 +476,7 @@ mdStat = function(code, drop=TRUE, labels=FALSE,
 
 #' Get data from an SDMX source as a data.table
 #'
-#' @param code a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See \code{\link{mdsdmx}} for details
+#' @param code a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See \code{\link{mdSdmx}} for details
 #' @param reshape a formula combining dimension names in order to reshape the result. Default is \code{...~ TIME} which means each time period to be in a column, plus extra identifier columns at the beginning. See \code{\link[data.table]{dcast}} for details.
 #' @param drop if TRUE, drop any singleton dimensions (see also drop.md3)
 #' @param labels add extra columns with the descriptions for each dimension element, e.g. "Austria" for "AUT"
@@ -478,18 +484,18 @@ mdStat = function(code, drop=TRUE, labels=FALSE,
 #' @param startPeriod placeholder for future use
 #' @param endPeriod placeholder for future use
 #' @return a \code{data.table}
-#' @details This function tweaks the package \code{rsdmx}  to load data. For formulating SDMX query codes, check \code{help(\link{mdsdmx})}
-#' @seealso \code{\link{helpmdStat}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
+#' @details This function tweaks the package \code{rsdmx}  to load data. For formulating SDMX query codes, check \code{help(\link{mdSdmx})}
+#' @seealso \code{\link{helpmds}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
 #' @examples
-#' mdsdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
-#' mdsdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",as = 'zoo')
+#' mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
+#' mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",as = 'zoo')
 #'
-#' o1=mdsdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
+#' o1=mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
 #' dimcodes(o1)
 #' @export
 DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
                  ccode=defaultcountrycode(),startPeriod=NULL,endPeriod=NULL) {
-  x =mdStat(code,drop,labels, as='data.table',ccode = ccode)
+  x =mds(code,drop,labels, as='data.table',ccode = ccode)
   mydc=attr(x,'dcstruct')
 
   #browser()
@@ -510,11 +516,11 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 
 
 
-#ff=mdStat('ECB/EXR/M.RON.EUR.SP00.',labels = TRUE)
+#ff=mds('ECB/EXR/M.RON.EUR.SP00.',labels = TRUE)
 #dimcodes(ff)
 
 #PROBLEMMMMMMMMMM!
-#ii=mdStat('Estat/prc_hicp_midx/M.I15.CP00.')
+#ii=mds('Estat/prc_hicp_midx/M.I15.CP00.')
 #ii[.y2023m07,as='numeric']
 #as.numeric(ii[.y2023m07]/ii[.y2022m07]-1)
 .fetchdnwcodelist = function(mycode,verbose=FALSE) {
@@ -562,7 +568,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
     if (!nchar(pattern)) {
     cat('The following SDMX providers are available: \n')
     cat(capture.output(print(.mdstats_providers$overview[,c(1,2,4)])),sep = '\n')
-    cat('\nTo see which dataflows are available e.g. for provider BIS, run helpmdStat("BIS") \n')
+    cat('\nTo see which dataflows are available e.g. for provider BIS, run helpmds("BIS") \n')
     return(invisible(.mdstats_providers$overview[,c(1:4,7)]))
     }
     tempix=apply(.mdstats_providers$overview[,1:7],1,function(x) any(grepl(pattern,x,ignore.case = TRUE)))
@@ -570,7 +576,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
     cat('The following SDMX providers match pattern: "',pattern, '"\n',sep='')
     cat(capture.output(print(.mdstats_providers$overview[tempix,c(1,2,4)])),sep = '\n')
     cat('\nTo see which dataflows are available e.g. for provider ',.mdstats_providers$overview[which(tempix)[1],1],
-        ', run helpmdStat("',.mdstats_providers$overview[which(tempix)[1],1],'") \n',sep='')
+        ', run helpmds("',.mdstats_providers$overview[which(tempix)[1],1],'") \n',sep='')
     return(invisible(.mdstats_providers$overview[tempix,c(1:4,7)]))
   }
   pattern=as.character(pattern)[1]
@@ -599,8 +605,8 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
     }
     cat(capture.output(print(head(mydf,50))),sep='\n')
     if (NROW(mydf)>50) { cat('plus ',NROW(mydf)-50, ' more.')}
-    cat('Run helpmdStat("',vq[1],', pattern="YOUREXPRESSION") to search for specific terms\n',sep = '')
-    cat('Run xx=helpmdStat("',vq[1],'") to load the list of dataflows into variable xx\n',sep='')
+    cat('Run helpmds("',vq[1],', pattern="YOUREXPRESSION") to search for specific terms\n',sep = '')
+    cat('Run xx=helpmds("',vq[1],'") to load the list of dataflows into variable xx\n',sep='')
     return(invisible(mydf))
 
   }
@@ -611,7 +617,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
     if (!any(grepl('err',class(testdf)))) {
       cat("The query ", query, " is fine and should return results\n...")
 
-      temp=mdsdmx(query,drop=FALSE,labels=TRUE,as='md3',verbose = verbose)
+      temp=mdSdmx(query,drop=FALSE,labels=TRUE,as='md3',verbose = verbose)
       mydc=MD3:::.getdimcodes(temp)
       mydn=names(.fetchdnwcodelist(paste0(vq[[1]],'/',vq[[2]])))
       if (length(dim)) {
@@ -638,7 +644,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
     }
     codeshere=strsplit((MD3:::.mdrest2codes(paste0(' ',vq[3],' '),10)),split='\\+')
     mydims=try(.fetchdnwcodelist(query),silent=TRUE)
-    if (any(grepl('err',class(mydims)))) { return(helpmdStat(paste0(vq[1],'/',vq[2]))) }
+    if (any(grepl('err',class(mydims)))) { return(helpmds(paste0(vq[1],'/',vq[2]))) }
     if (length(codeshere)!=length(mydims)) { stop('Your query ', query, ' suggests that the dataflow ', vq[1],'/',vq[2],' has ',
                                 length(codeshere),' dimensions. But ', vq[2], ' contains ',length(mydims), 'dimensions.')}
 
@@ -692,8 +698,8 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
         if (NROW(tempdim)>50) cat('\nand ',NROW(tempdim)-50,'more with data')
         if (NROW(mydim)>NROW(tempdim)) { cat('\nIn addition there are ',NROW(mydim)-NROW(tempdim),'permissible codes for that dimension with empty data') }
       }
-      cat('\nRun e.g. helpmdStat("',vq[1],'/',vq[2],'", dim="',names(mydn)[2],'", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension ',names(mydn)[2],sep='')
-      cat('\nRun e.g. xx=helpmdStat("',vq[1],'/',vq[2],'", dim="',names(mydn)[2],'") to load all codes and descriptions for dimension ',names(mydn)[2],' into variable xx\n',sep='')
+      cat('\nRun e.g. helpmds("',vq[1],'/',vq[2],'", dim="',names(mydn)[2],'", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension ',names(mydn)[2],sep='')
+      cat('\nRun e.g. xx=helpmds("',vq[1],'/',vq[2],'", dim="',names(mydn)[2],'") to load all codes and descriptions for dimension ',names(mydn)[2],' into variable xx\n',sep='')
 
             return(invisible(tempdim))
     } else {
@@ -737,8 +743,8 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
     cat('\nExample query: ',xmpl)
   }
 
-  cat('\nRun e.g. helpmdStat("',vq[1],'/',vq[2],'", dim="',mydims[2],'") to see the codes for dimension ',mydims[2],sep='')
-  cat('\nRun e.g. helpmdStat("',vq[1],'/',vq[2],'", dim="',mydims[2],'", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension ',mydims[2],sep='')
+  cat('\nRun e.g. helpmds("',vq[1],'/',vq[2],'", dim="',mydims[2],'") to see the codes for dimension ',mydims[2],sep='')
+  cat('\nRun e.g. helpmds("',vq[1],'/',vq[2],'", dim="',mydims[2],'", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension ',mydims[2],sep='')
 
 
 
@@ -757,9 +763,9 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 #' @section SDMX query:
 #' A restful SDMX query combines Provider, Dataflow and Dimension selectors. Take the example 'ECB/EXR/A.GBP+CHF.EUR.SP00.A'
 #' \itemize{
-#'   \item 'ECB' designates the provider ECB (see helpmdStat() for a list of providers)
-#'   \item 'EXR' designates the ECB's dataflow 'EXR' about exchange rates (see helpmdStat('ECB') for a list of ECB dataflows)
-#'   \item A.GBP+CHF.EUR.SP00.A is the dimension selector: See helpmdStat('ECB/EXR') for what dimensions exist in ECB/EXR)
+#'   \item 'ECB' designates the provider ECB (see helpmds() for a list of providers)
+#'   \item 'EXR' designates the ECB's dataflow 'EXR' about exchange rates (see helpmds('ECB') for a list of ECB dataflows)
+#'   \item A.GBP+CHF.EUR.SP00.A is the dimension selector: See helpmds('ECB/EXR') for what dimensions exist in ECB/EXR)
 #' }
 #' Here,
 #' \itemize{
@@ -780,52 +786,52 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 #' Alternatively, you can use \code{\link{helpNomics}}
 #'
 #' \itemize{
-#'  \item \code{helpmdStat()} returns a vector with available providers
-#'  \item \code{helpmdStat("PROVIDER")} returns a vector with the dataflows available for the provider
-#'  \item \code{helpmdStat("PROVIDER", pattern="PATTERN")} looks for a dataflow whose name or code matches the string pattern
+#'  \item \code{helpmds()} returns a vector with available providers
+#'  \item \code{helpmds("PROVIDER")} returns a vector with the dataflows available for the provider
+#'  \item \code{helpmds("PROVIDER", pattern="PATTERN")} looks for a dataflow whose name or code matches the string pattern
 #'  \item \code{helpNomics("PROVIDER/DATAFLOW")} prints the structure of the dataflow dimensions, as well as an example query, and invisible returns the structure of code names within the dataflow
 #'  \item \code{helpNomics("PROVIDER/DATAFLOW/SELECTORS")} invisibly returns the query result. If not successful, it provides clues whwere the query might be wrong
 #'  \item \code{helpNomics("PROVIDER/DATAFLOW", dim="NumberOrName")} prints the code names and labels of the selected dimension, and invidibly returns a data.frame with those codes and labels
 #'  \item \code{helpNomics("PROVIDER/DATAFLOW", dim="NumberOrName", pattern="PATTERN")} searches the codes and labels of that dimension for a certain pattern
 #' }
 #'
-#' @seealso \code{\link{mdStat}} to load data,  \code{\link[MD3]{helpNomics}} for a similar function
+#' @seealso \code{\link{mds}} to load data,  \code{\link[MD3]{helpNomics}} for a similar function
 #' @examples
 #' #lets find house price data from the Bank of International Settlements
-#' helpmdStat() #BIS is a provider that is available
-#' helpmdStat(pattern='bis.org') #indeed
+#' helpmds() #BIS is a provider that is available
+#' helpmds(pattern='bis.org') #indeed
 #'
-#' helpmdStat('BIS') #list all available dataflows
+#' helpmds('BIS') #list all available dataflows
 #'
-#' helpmdStat('BIS',pat='property') #so the dataflow we need is called 'WS_SPP'
+#' helpmds('BIS',pat='property') #so the dataflow we need is called 'WS_SPP'
 #'
-#' helpmdStat('BIS/WS_SPP') # so there are 4 dimensions (apart form time): FREQ, REF_AREA, VALUE, UNIT_MEASURE
+#' helpmds('BIS/WS_SPP') # so there are 4 dimensions (apart form time): FREQ, REF_AREA, VALUE, UNIT_MEASURE
 #'
 #' #lets check what is in ALUE
-#' helpmdStat('BIS/WS_SPP',dim='VALUE') #only two dimensions in VALUE
-#' oo=helpmdStat('BIS/WS_SPP',dim='REF_AREA') #but lots of countries. I guess not all of them will be filled
+#' helpmds('BIS/WS_SPP',dim='VALUE') #only two dimensions in VALUE
+#' oo=helpmds('BIS/WS_SPP',dim='REF_AREA') #but lots of countries. I guess not all of them will be filled
 #' oo # show all countries in there
 #'
-#' helpmdStat('BIS/WS_SPP',dim='FREQ') #all kinds of frequencies too that are permissible. But not all of them will have data.
+#' helpmds('BIS/WS_SPP',dim='FREQ') #all kinds of frequencies too that are permissible. But not all of them will have data.
 #'
-#' foo=mdStat('BIS/WS_SPP/Q.FR.N.', labels=TRUE) #lets look for nominal quarterly house prices from France
+#' foo=mds('BIS/WS_SPP/Q.FR.N.', labels=TRUE) #lets look for nominal quarterly house prices from France
 #' foo #hmm, what does 628 mean?
 #'
 #' dimcodes(foo)[[1]] #one way to find out
 #'
-#' foo=helpmdStat('BIS/WS_SPP/Q.FR.N.') # another way to find out
+#' foo=helpmds('BIS/WS_SPP/Q.FR.N.') # another way to find out
 #' #note that foo now contains the dimcodes for that code
 #'
-#' helpmdStat('BIS/WS_SPP/Q.FR.N.', dim='UNIT_MEASURE') # another way to find out
+#' helpmds('BIS/WS_SPP/Q.FR.N.', dim='UNIT_MEASURE') # another way to find out
 #'
-#' helpmdStat('BIS/WS_SPP',dim=4,pattern='628' ) \ another way to find out
+#' helpmds('BIS/WS_SPP',dim=4,pattern='628' ) \ another way to find out
 #'
 #'
 #' #find out why another formulation does not work:
-#' helpmdStat('BIS/WS_SPP/Q.FRA.N.')
+#' helpmds('BIS/WS_SPP/Q.FRA.N.')
 #'
 #' @export
-helpmdStat = function(query='', pattern = "", dim = NULL, verbose = TRUE){
+helpmds = function(query='', pattern = "", dim = NULL, verbose = TRUE){
   query=trimws(query[1])
   if (nchar(query)) {
     sprov=.fixSdmxCode(query,asvector = TRUE)[[1]]
@@ -846,7 +852,7 @@ helpmdStat = function(query='', pattern = "", dim = NULL, verbose = TRUE){
   if (!nchar(pattern)) {
     cat('The following SDMX providers are available: \n')
     cat(capture.output(print(temp[,c(1,2,4)])),sep = '\n')
-    cat('\nTo see which dataflows are available e.g. for provider BIS, run helpmdStat("BIS") \n')
+    cat('\nTo see which dataflows are available e.g. for provider BIS, run helpmds("BIS") \n')
     return(invisible(temp))
   }
   tempix=apply(.mdstats_providers$overview[,1:7],1,function(x) any(grepl(pattern,x,ignore.case = TRUE)))
@@ -854,7 +860,7 @@ helpmdStat = function(query='', pattern = "", dim = NULL, verbose = TRUE){
   cat('The following SDMX providers match pattern: "',pattern, '"\n',sep='')
   cat(capture.output(print(temp[tempix,c(1,2,4)])),sep = '\n')
   cat('\nTo see which dataflows are available e.g. for provider ',.mdstats_providers$overview[which(tempix)[1],1],
-      ', run helpmdStat("',.mdstats_providers$overview[which(tempix)[1],1],'") \n',sep='')
+      ', run helpmds("',.mdstats_providers$overview[which(tempix)[1],1],'") \n',sep='')
   return(invisible(temp))
 
 }
@@ -950,3 +956,6 @@ helpmdStat = function(query='', pattern = "", dim = NULL, verbose = TRUE){
 
 
 #https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/dataflow/ESTAT/namq_10_gdp/latest?detail=referencepartial&references=descendants
+
+
+

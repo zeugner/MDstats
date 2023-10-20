@@ -19,7 +19,7 @@
 "providertable"
 
 
-load('data/providertable.rda')
+#load('data/providertable.rda')
 
 # providertablepath=dir(paste0(libname,'/',pkgname),pattern = 'providers.csv',recursive = TRUE,full.names = TRUE)[1L]
 # providertable=utils::read.csv(providertablepath,stringsAsFactors = FALSE,header = TRUE, na.strings='')
@@ -31,4 +31,4 @@ load('data/providertable.rda')
 
 
 
-.mdstats_providers = .mdstats_providerscreate(providertable)
+

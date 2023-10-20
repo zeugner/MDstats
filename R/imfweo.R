@@ -105,10 +105,10 @@
 #' @param ccode If not \code{ccode==NULL}, then the function attempts to convert to ccode destination such as 'iso2c', 'EC', 'iso3c'. See \code{\link[MDcountrycode]{ccode}} for permissible values.  \code{\link[MDcountrycode]{defaultcountrycode}} for defining this value as a session-wide option.
 #' @param startPeriod startyear (1960 if empty)
 #' @param endPeriod end year (latest available if left empty)
-#' @param \ldots further arguments passed from mdStat
+#' @param \ldots further arguments passed from mds
 #' @return an md3 object or other as specified by \code{as}
 #' @details This function works by caching IMF WEO vintages on the local drive
-#' @seealso \code{\link{mdStat}} for loading from major data sources
+#' @seealso \code{\link{mds}} for loading from major data sources
 #' @examples
 #'
 #' mdWEO('CA+US+MX.LP') #Population of Canada, US and Mexico
@@ -204,8 +204,8 @@ mdWEO = function(code=NULL,year=0,release=0,
   if (vcode[1]=='IMFWEO') {vcode=character()}
   if (!length(vcode)) {
     if (sdmxlike) {
-      cat('\nIMFWEO has only one dataflow available via mdStat: "IMFWEO/WEO"\n')
-      cat('It may be used like mdStat("IMFWEO/WEO/FRA.NGDP")\n')
+      cat('\nIMFWEO has only one dataflow available via mds: "IMFWEO/WEO"\n')
+      cat('It may be used like mds("IMFWEO/WEO/FRA.NGDP")\n')
       cat('Use function mdWEO() for more options, in particular to retrieve earlier vintages \n')
     }
     cat('\nWEO has the following dimensions excl TIME:\n')
