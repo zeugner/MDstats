@@ -7,30 +7,34 @@
 \usage{
 mdSdmx(
   code,
+  startPeriod = "",
+  endPeriod = "",
   drop = TRUE,
   labels = FALSE,
   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",
     "data.frame"),
   ccode = getOption("defaultcountrycode", "EC"),
-  startPeriod = NULL,
-  endPeriod = NULL,
   verbose = FALSE
 )
 
 mds(
   code,
+  startPeriod = "",
+  endPeriod = "",
   drop = TRUE,
   labels = FALSE,
   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",
     "data.frame"),
   ccode = getOption("defaultcountrycode", "EC"),
-  startPeriod = NULL,
-  endPeriod = NULL,
   verbose = FALSE
 )
 }
 \arguments{
 \item{code}{a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See Details}
+
+\item{startPeriod}{optional, character, integer, timo or date-like class. default empty string means to fetch data including  the first available period}
+
+\item{endPeriod}{placeholder fo optional, character, integer, timo or date-like class. default empty string means to fetch data including  the last available observation}
 
 \item{drop}{if TRUE, drop any singleton dimensions (see also drop.md3)}
 
@@ -39,10 +43,6 @@ mds(
 \item{as}{how to output the result: \code{md3}: as md3 object with full metadata, \code{2d}: as a data.table with periods as column names, \code{1d} resp. \code{data.table}: as fully stacked data.table, \code{array}: as multi-dim array, \code{zoo}: as \code{\link[zoo]{zooreg}} time series object.}
 
 \item{ccode}{ccode If not \code{ccode==NULL}, then the function attempts to convert to ccode destination such as 'iso2c', 'EC', 'iso3c'. See \code{\link[MDcountrycode]{ccode}} for permissible values.  \code{\link[MDcountrycode]{defaultcountrycode}} for defining this value as a session-wide option.}
-
-\item{startPeriod}{placeholder fo future use}
-
-\item{endPeriod}{placeholder fo future use}
 
 \item{verbose}{if TRUE, this function chatters about what it is doing, notably contacting servers}
 }
@@ -81,10 +81,10 @@ To see which providers are avaialble, and to find query codes, use \code{\link{h
 }
 
 \examples{
-mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
-mdSdmx("ECB/EXR/Q.PLN+CZK+SEK.EUR.SP00.A",as = '2d')
+mds("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
+mds("ECB/EXR/Q.PLN+CZK+SEK.EUR.SP00.A",as = '2d')
 
-o1=mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
+o1=mds("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
 dimcodes(o1)
 
 
@@ -96,7 +96,7 @@ foo[AT:BG.TOTAL.y2020:y]
 mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
 mds('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 
-mdSdmx("BIS/WS_EER_M/M.N.B.AT+FR+BE")
+mds("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
 
 }
 \seealso{

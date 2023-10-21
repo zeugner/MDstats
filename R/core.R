@@ -41,6 +41,7 @@
 
   if (!exists('.dprovs')) {.dprovs=providertable} #else {warning('could not find providertable of class ',class(.dprovs)) }
   .buildaliases=function() {
+    if (!length(.dprovs)) .dprovs <<- providertable
     anames0=strsplit(.dprovs[,'AltNicks'],split=',')
     names(anames0) = .dprovs[,'AgencyID']
     anames=unlist(lapply(as.list(names(anames0)),function(x) rep(x,length(anames0[[x]]))))
@@ -62,7 +63,11 @@
   outlist=list()
   outlist$sources = data.frame(prov=sproviders,dataurl=surls[sproviders],datasuffix=ssuffix[sproviders],stringsAsFactors = FALSE, row.names = sproviders)
   outlist$sayah = function() message("ah")
-  outlist$overview=.dprovs
+  #outlist$overview=.dprovs
+  outlist$table = function() {
+    if (!length(.dprovs)) .dprovs <<- providertable
+    return(.dprovs)
+  }
   outlist$alias = function(x) {if (!length(valiases)) {valiases<<- .buildaliases()}; gout=unname(valiases[toupper(gsub('/.*$','',x))]); if (!anyNA(gout)) {return(gout)}; warning('Provider ',gsub('/.*$','',x), ' not available from mdStats'); return(x)}
   outlist$dataflows = function(sprovider,verbose=TRUE) {
     sprovider=valiases[toupper(sprovider)]
@@ -129,7 +134,7 @@
 }
 
 
-.stackedsdmx =function(mycode,justurl=FALSE,justxml=FALSE,verbose=FALSE) {
+.stackedsdmx =function(mycode,justurl=FALSE,justxml=FALSE,verbose=FALSE,startPeriod='',endPeriod='') {
 
   mycode=trimws(mycode)
   if (substr(mycode,0,4)=='http') {
@@ -138,11 +143,14 @@
     myprov=gsub('/.*$','',mycode)
     myurl=paste0(.mdstats_providers$sources[myprov,'dataurl'],gsub("^[^/]*/","",mycode))
     myurl=paste0(myurl,.mdstats_providers$sources[myprov,'datasuffix'])
+    if (nchar(startPeriod)) myurl=paste0(myurl,ifelse(any(grepl('\\?',myurl)),'&','?'),'startPeriod=',startPeriod)
+    if (nchar(endPeriod)) myurl=paste0(myurl,ifelse(any(grepl('\\?',myurl)),'&','?'),'endPeriod=',endPeriod)
   }
 
   if (justurl) return(myurl)
   if (verbose) cat('\nreading from ',myurl,' ...\n')
-  ressdmx <- rsdmx::readSDMX(myurl,verbose = verbose)
+  ressdmx <- try(rsdmx::readSDMX(myurl,verbose = verbose),silent=TRUE)
+  if (is(ressdmx,'try-error')) stop('Could not fetch data for query code ',mycode,'.\nTry running helpmds("',mycode,") to find out why.\n")
   if (justxml) return(ressdmx)
   if (class(ressdmx)=='SDMXCompactData') {
     res=rsdmx:::as.data.frame.SDMXCompactData(ressdmx)
@@ -172,6 +180,7 @@
   } else {
     dcodes0=xmlApply(xmlChildren(slot(ressdmx,'xmlObj'))[[1]][["DataSet"]],"[[","SeriesKey")
     dcodes0=dcodes0[as.logical(unlist(lapply(dcodes0,length)))]
+    if (!length(dcodes0)) stop('the query returned a result that is empty')
     dcodes1=lapply(dcodes0,function(x) xmlApply(x,xmlAttrs))
     dcodes2=lapply(dcodes1,function(x) {ds=as.data.frame(x); ovec=as.character(ds[2,]);names(ovec)=ds[1,]; ovec})
   }
@@ -224,7 +233,7 @@
   mmd3
 }
 
-.sdmxasmd3 = function(mycode,drop=TRUE,metadata=FALSE,verbose=FALSE, ccode=NULL) {
+.sdmxasmd3 = function(mycode,drop=TRUE,metadata=FALSE,verbose=FALSE, ccode=NULL, startPeriod='', endPeriod='') {
   mycode=.fixSdmxCode(mycode,asvector = FALSE)
   #dfmeta=rsdmx::readSDMX(providerId=.fixSdmxCode(mycode)[1],resource='dataflow',resourceId = .fixSdmxCode(mycode)[2],verbose=verbose)
   #if ('dataflows' %in% slotNames(dfmeta)) mydsdref=dfmeta@dataflows[[1]]@dsdRef else mydsdref= dfmeta@datastructures@datastructures[[1]]@id
@@ -242,7 +251,7 @@
     possdn = .mdstats_providers$dfdims(.fixSdmxCode(mycode)[[1]],.fixSdmxCode(mycode)[[2]],verbose)
   }
 
-  mxml=.stackedsdmx(mycode,justxml=TRUE,verbose=verbose)
+  mxml=.stackedsdmx(mycode,justxml=TRUE,verbose=verbose,startPeriod = startPeriod,endPeriod = endPeriod)
   mout=.xml2md3(mxml,mycode,names(possdn))
   if (metadata) {
 
@@ -280,8 +289,8 @@
 
 .fetchDataflows = function(sprovider,verbose=TRUE) {
   if (is.character(sprovider)) {
-    if (verbose) cat('\nReading from ',.mdstats_providers$overview[sprovider,'PrimDataFlows'],'\n')
-    oflows=rsdmx::readSDMX(.mdstats_providers$overview[sprovider,'PrimDataFlows'])
+    if (verbose) cat('\nReading from ',.mdstats_providers$table()[sprovider,'PrimDataFlows'],'\n')
+    oflows=rsdmx::readSDMX(.mdstats_providers$table()[sprovider,'PrimDataFlows'])
   } else {
     oflows = sprovider
   }
@@ -383,12 +392,12 @@
 #' Get data from an SDMX source
 #'
 #' @param code a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See Details
+#' @param startPeriod optional, character, integer, timo or date-like class. default empty string means to fetch data including  the first available period
+#' @param endPeriod placeholder fo optional, character, integer, timo or date-like class. default empty string means to fetch data including  the last available observation
 #' @param drop if TRUE, drop any singleton dimensions (see also drop.md3)
 #' @param labels add the descriptions for each dimension element, e.g. "Austria" for "AUT". You can check those with function \code{\link[MD3]{dimcodes}}
 #' @param as how to output the result: \code{md3}: as md3 object with full metadata, \code{2d}: as a data.table with periods as column names, \code{1d} resp. \code{data.table}: as fully stacked data.table, \code{array}: as multi-dim array, \code{zoo}: as \code{\link[zoo]{zooreg}} time series object.
 #' @param ccode ccode If not \code{ccode==NULL}, then the function attempts to convert to ccode destination such as 'iso2c', 'EC', 'iso3c'. See \code{\link[MDcountrycode]{ccode}} for permissible values.  \code{\link[MDcountrycode]{defaultcountrycode}} for defining this value as a session-wide option.
-#' @param startPeriod placeholder fo future use
-#' @param endPeriod placeholder fo future use
 #' @param verbose if TRUE, this function chatters about what it is doing, notably contacting servers
 #' @return depending on \code{as}, an \code{md3}, \code{array}, \code{numeric}, \code{data.table}, \code{zoo}, \code{2d} dat.table, \code{1d} stacked data.table, or data.frame    containing the requested data
 #' @details This function tweaks the package \code{rsdmx}  to load data.
@@ -416,10 +425,10 @@
 #' \code{mdSdmx} is a function for loading from SDMX data sources. \code{mds} encompasses that one, and will be broadened to other data sources at a later stage.
 #' @seealso \code{\link{helpmds}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
 #' @examples
-#' mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
-#' mdSdmx("ECB/EXR/Q.PLN+CZK+SEK.EUR.SP00.A",as = '2d')
+#' mds("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
+#' mds("ECB/EXR/Q.PLN+CZK+SEK.EUR.SP00.A",as = '2d')
 #'
-#' o1=mdSdmx("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
+#' o1=mds("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
 #' dimcodes(o1)
 #'
 #'
@@ -431,14 +440,14 @@
 #' mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
 #' mds('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 #'
-#' mdSdmx("BIS/WS_EER_M/M.N.B.AT+FR+BE")
+#' mds("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
 #'
 #' @export
-mdSdmx = function(code, drop=TRUE, labels=FALSE,
+mdSdmx = function(code, startPeriod='',endPeriod='', drop=TRUE, labels=FALSE,
                   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
-                  ccode=getOption('defaultcountrycode','EC'), startPeriod=NULL,endPeriod=NULL,verbose=FALSE) {
+                  ccode=getOption('defaultcountrycode','EC'), verbose=FALSE) {
   if (missing(code)) return(helpmds())
-  if (match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$overview[[1]],nomatch=0)) {
+  if (match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$table()[[1]],nomatch=0)) {
     mout=.sdmxasmd3(code,drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
   } else {
     stop('Provider not available')
@@ -450,18 +459,22 @@ mdSdmx = function(code, drop=TRUE, labels=FALSE,
 
 #' @rdname mdSdmx
 #' @export
-mds = function(code, drop=TRUE, labels=FALSE,
+mds = function(code, startPeriod='', endPeriod='', drop=TRUE, labels=FALSE,
                     as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
-                    ccode=getOption('defaultcountrycode','EC'), startPeriod=NULL,endPeriod=NULL,verbose=FALSE) {
+                    ccode=getOption('defaultcountrycode','EC'),verbose=FALSE) {
+  if (!length(startPeriod)) {startPeriod=''}; if (!length(endPeriod)) {endPeriod=''}
+  if (is.numeric(startPeriod)) { if (startPeriod<1) {startPeriod=''} else { startPeriod=as.character(startPeriod)}}
+  if (is.numeric(endPeriod)) { if (endPeriod<1) {endPeriod=''} else { endPeriod=as.character(endPeriod)}}
+
   if (missing(code)) return(helpmds())
-  ixprov=match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$overview[[1]],nomatch=0)
+  ixprov=match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$table()[[1]],nomatch=0)
   if (ixprov>0) {
-    provtype=.mdstats_providers$overview[['PrimType']][ixprov]; if (is.na(provtype)) provtype=''
+    provtype=.mdstats_providers$table()[['PrimType']][ixprov]; if (is.na(provtype)) provtype=''
     if (provtype=='function') {
-      return(get(.mdstats_providers$overview[['DataProcessingFunction']][ixprov])(code=code,drop=drop,labels=labels,as=as,ccode=ccode,startPeriod=startPeriod,endPeriod=endPeriod,verbose=verbose))
+      return(get(.mdstats_providers$table()[['DataProcessingFunction']][ixprov])(code=code,startPeriod=startPeriod,endPeriod=endPeriod,drop=drop,labels=labels,as=as,ccode=ccode,verbose=verbose))
 
     }
-    mout=.sdmxasmd3(code,drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
+    mout=.sdmxasmd3(code,startPeriod=startPeriod, endPeriod=endPeriod, drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
     return(MD3:::.getas(mout,as))
   } else {
     if (any(grepl('nomics',tolower('code')))) {stop('DBnomics not available via this route. Try function Nomics, or helpNomics()')}
@@ -567,17 +580,17 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
   if (missing(query)) {
     if (!nchar(pattern)) {
     cat('The following SDMX providers are available: \n')
-    cat(capture.output(print(.mdstats_providers$overview[,c(1,2,4)])),sep = '\n')
+    cat(capture.output(print(.mdstats_providers$table()[,c(1,2,4)])),sep = '\n')
     cat('\nTo see which dataflows are available e.g. for provider BIS, run helpmds("BIS") \n')
-    return(invisible(.mdstats_providers$overview[,c(1:4,7)]))
+    return(invisible(.mdstats_providers$table()[,c(1:4,7)]))
     }
-    tempix=apply(.mdstats_providers$overview[,1:7],1,function(x) any(grepl(pattern,x,ignore.case = TRUE)))
+    tempix=apply(.mdstats_providers$table()[,1:7],1,function(x) any(grepl(pattern,x,ignore.case = TRUE)))
     if (!any(tempix)) {cat('No provider matching your pattern "',pattern,'" has been found.\n'); return(character())}
     cat('The following SDMX providers match pattern: "',pattern, '"\n',sep='')
-    cat(capture.output(print(.mdstats_providers$overview[tempix,c(1,2,4)])),sep = '\n')
-    cat('\nTo see which dataflows are available e.g. for provider ',.mdstats_providers$overview[which(tempix)[1],1],
-        ', run helpmds("',.mdstats_providers$overview[which(tempix)[1],1],'") \n',sep='')
-    return(invisible(.mdstats_providers$overview[tempix,c(1:4,7)]))
+    cat(capture.output(print(.mdstats_providers$table()[tempix,c(1,2,4)])),sep = '\n')
+    cat('\nTo see which dataflows are available e.g. for provider ',.mdstats_providers$table()[which(tempix)[1],1],
+        ', run helpmds("',.mdstats_providers$table()[which(tempix)[1],1],'") \n',sep='')
+    return(invisible(.mdstats_providers$table()[tempix,c(1:4,7)]))
   }
   pattern=as.character(pattern)[1]
   query=as.character(query)[1]
@@ -588,7 +601,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
   if (!nchar(vq['Filter']) && !nchar(vq[2])) {
 
     mydf=.mdstats_providers$dataflows(vq[1])
-    if (!is.na(.mdstats_providers$overview[vq[1],'LookatDSDref'])) { mydf[,'id']=mydf[,'dsdref']}
+    if (!is.na(.mdstats_providers$table()[vq[1],'LookatDSDref'])) { mydf[,'id']=mydf[,'dsdref']}
     mydf=mydf[,-(2:3)]
     if (!nchar(pattern)) {
       cat('Provider ',vq[1],  ' has the following data flows available:\n')
@@ -677,8 +690,8 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
     }
     #browser()
     if (!length(mydim)) stop('dimension ',dim,'does not exist in dataflow ',vq[1],'/',vq[2],'.')
-    #tempnomics=try(MD3::helpNomics(paste0(.mdstats_providers$overview[vq[1],'nomicsID'],'/',vq[2]),dim=dim,verbose = FALSE),silent=TRUE)
-    dfinfo=suppressWarnings(try(MD3:::.NomicmdStataflowinfo(.mdstats_providers$overview[vq[1],'nomicsID'],vq[[2]]),silent=TRUE))
+    #tempnomics=try(MD3::helpNomics(paste0(.mdstats_providers$table()[vq[1],'nomicsID'],'/',vq[2]),dim=dim,verbose = FALSE),silent=TRUE)
+    dfinfo=suppressWarnings(try(MD3:::.NomicmdStataflowinfo(.mdstats_providers$table()[vq[1],'nomicsID'],vq[[2]]),silent=TRUE))
 
     if (!nchar(pattern)) {
 
@@ -735,11 +748,11 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 
 
 
-  dfinfo=suppressWarnings(try(MD3:::.Nomicsdataflowinfo(.mdstats_providers$overview[vq[1],'nomicsID'],vq[[2]]),silent=TRUE))
+  dfinfo=suppressWarnings(try(MD3:::.Nomicsdataflowinfo(.mdstats_providers$table()[vq[1],'nomicsID'],vq[[2]]),silent=TRUE))
 
   if (!any(grepl('err',class(dfinfo)))) {
     xmpl = dfinfo$example_query
-    if (.mdstats_providers$overview[vq[1],'nomicsID']!=vq[1]) { xmpl= paste0(vq[1],'/',gsub('^[^/]*/','',xmpl))}
+    if (.mdstats_providers$table()[vq[1],'nomicsID']!=vq[1]) { xmpl= paste0(vq[1],'/',gsub('^[^/]*/','',xmpl))}
     cat('\nExample query: ',xmpl)
   }
 
@@ -836,13 +849,13 @@ helpmds = function(query='', pattern = "", dim = NULL, verbose = TRUE){
   if (nchar(query)) {
     sprov=.fixSdmxCode(query,asvector = TRUE)[[1]]
 
-    stype=.mdstats_providers$overview[sprov,'PrimType']
+    stype=.mdstats_providers$table()[sprov,'PrimType']
     if (is.na(stype)) return(.helpsdmx(query,pattern,dim,verbose))
     if (grepl('SDMX',stype,ignore.case = TRUE)) return(.helpsdmx(query,pattern,dim,verbose))
-    return(get(.mdstats_providers$overview[sprov,'PrimRepoUrl'])(query,pattern,dim,verbose,sdmxlike=TRUE))
+    return(get(.mdstats_providers$table()[sprov,'PrimRepoUrl'])(query,pattern,dim,verbose,sdmxlike=TRUE))
   }
 
-  temp=.mdstats_providers$overview
+  temp=.mdstats_providers$table()
 
   temp[is.na(temp[,'PrimType']),'PrimType']=''
   ix=(temp[,'PrimType']=='') | grepl('SDMX',temp[,'PrimType'],ignore.case = TRUE)
@@ -855,12 +868,12 @@ helpmds = function(query='', pattern = "", dim = NULL, verbose = TRUE){
     cat('\nTo see which dataflows are available e.g. for provider BIS, run helpmds("BIS") \n')
     return(invisible(temp))
   }
-  tempix=apply(.mdstats_providers$overview[,1:7],1,function(x) any(grepl(pattern,x,ignore.case = TRUE)))
+  tempix=apply(.mdstats_providers$table()[,1:7],1,function(x) any(grepl(pattern,x,ignore.case = TRUE)))
   if (!any(tempix)) {cat('No provider matching your pattern "',pattern,'" has been found.\n'); return(character())}
   cat('The following SDMX providers match pattern: "',pattern, '"\n',sep='')
   cat(capture.output(print(temp[tempix,c(1,2,4)])),sep = '\n')
-  cat('\nTo see which dataflows are available e.g. for provider ',.mdstats_providers$overview[which(tempix)[1],1],
-      ', run helpmds("',.mdstats_providers$overview[which(tempix)[1],1],'") \n',sep='')
+  cat('\nTo see which dataflows are available e.g. for provider ',.mdstats_providers$table()[which(tempix)[1],1],
+      ', run helpmds("',.mdstats_providers$table()[which(tempix)[1],1],'") \n',sep='')
   return(invisible(temp))
 
 }
@@ -910,7 +923,7 @@ helpmds = function(query='', pattern = "", dim = NULL, verbose = TRUE){
 .findgeodim = function(possdn,provider=NULL) {
   #this function takes possdn, which is a character vector of codelists associated with dimensions, and named with dimensionm names
   #\ anmd tries to guess which one of those dimensiosn refers to countrycodes
-  z0=.mdstats_providers$overview
+  z0=.mdstats_providers$table()
   if (!length(provider)) {
     z1=paste(na.omit(toupper(z0[['GeoCLsandDims']])),collapse=',')
   } else {
