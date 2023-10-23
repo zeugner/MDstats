@@ -933,6 +933,7 @@ helpmds = function(query='', pattern = "", dim = NULL, verbose = TRUE){
 
   z2=as.list(gsub('^.*/','',strsplit(toupper(z1),split=',')[[1L]]))
   rescl=(lapply(z2,function(x) grepl(x,toupper(possdn))))
+  if (is.null(names(possdn))) {names(possdn)<-possdn}
   resdn=(lapply(z2,function(x) grepl(x,toupper(names(possdn)))))
   ix=which(apply(as.data.frame(c(resdn,rescl)),1,any))
   names(possdn)[ix]

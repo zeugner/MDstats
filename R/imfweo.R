@@ -83,9 +83,12 @@
   #yyy=names(ddd)[-(1:2)]
   #yy2=as.timo(yyy); names(yy2)=yyy
   ddd=ddd[!is.na(ddd[[1]]) & !is.na(ddd[[2]]),]
+  emptycol=apply(ddd,2,function(x) all(is.na(x)))
+  if (any(emptycol)) ddd=ddd[,!emptycol,with=FALSE]
+
   dstacked=data.table::melt(data.table(ddd),id.vars=1:2, value.name = MD3:::.md3resnames('value'),variable.factor=FALSE)
   colnames(dstacked)[1:3]=c('COUNTRY','SUBJECT','TIME')
-  dstacked=data.table::copy(dstacked[!is.na(dstacked[[4]])])
+  dstacked=data.table::copy(dstacked[!is.na(dstacked[[4]]),])
   dstacked[['TIME']]=MD3:::.char2timo(dstacked[['TIME']],frq='A',guess = FALSE)
   attr(dstacked,'dcstruct')=(list(COUNTRY=data.frame(code=names(ctries),'label:en'=ctries,stringsAsFactors = FALSE,check.names = FALSE),
                                                        SUBJECT=data.frame(code=names(subj),'label:en'=subj,stringsAsFactors = FALSE,check.names = FALSE),
