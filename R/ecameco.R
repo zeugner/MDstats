@@ -52,17 +52,17 @@
   dameco=rbindlist(lameco)
   if (anyDuplicated(dameco[[1]])) dameco=dameco[!duplicated(dameco[[1]]),]
   tempcodes=MD3:::.mdrest2codes(dameco[[1]])
-  tempcodes=cbind(GEO=tempcodes[,1],TRAFO=apply(tempcodes[,2:5],1,paste,collapse='_'),INDICATOR=tempcodes[,6])
+  tempcodes=cbind(COUNTRY=tempcodes[,1],TRAFO=apply(tempcodes[,2:5],1,paste,collapse='_'),INDICATOR=tempcodes[,6])
   if (!grepl('^0-9',colnames(dameco)[[NCOL(dameco)]])) { dameco=dameco[,(1:(NCOL(dameco)-1)),with=FALSE]}
 
   d2d=cbind(tempcodes,dameco[,grepl('^[0-9]*$',colnames(dameco)),with=FALSE])
   dstacked=data.table::melt(d2d,id.vars=1:3, variable.name='TIME', value.name = MD3:::.md3resnames('value'), variable.factor=FALSE,na.rm = TRUE)
-   dstacked[['TIME']]=MD3:::as.timo(dstacked[['TIME']])
-  if (any(colnames(dstacked)=='COUNTRY')) colnames(dstacked)[colnames(dstacked)=='COUNTRY'] = 'GEO'
+   dstacked[['TIME']]=MD3:::as.timo(as.integer(dstacked[['TIME']]))
+  #if (any(colnames(dstacked)=='COUNTRY')) colnames(dstacked)[colnames(dstacked)=='COUNTRY'] = 'countrylabel'
 
-   clc=cbind(tempcodes[,1],`label:en`=dameco[,list(COUNTRY)]); clc=as.data.frame(clc[!duplicated(clc[[1]])])
-   clt=cbind(tempcodes[,2],dameco[,list(UNIT)]); clt=as.data.frame(clt[!duplicated(clt[[1]])])
-   cli=cbind(tempcodes[,3],dameco[,list(TITLE)]); cli=as.data.frame(cli[!duplicated(cli[[1]])])
+   clc=cbind(tempcodes[,1],`label:en`=dameco[,'COUNTRY']); clc=as.data.frame(clc[!duplicated(clc[,1]),])
+   clt=cbind(tempcodes[,2],dameco[,'UNIT']); clt=as.data.frame(clt[!duplicated(clt[,1]),])
+   cli=cbind(tempcodes[,3],dameco[,'TITLE']); cli=as.data.frame(cli[!duplicated(cli[,1]),])
    dcdraft=list(clc,clt,cli,unique(dstacked$TIME)); names(dcdraft)=c(colnames(tempcodes),'TIME')
    dcdraft=MD3:::.dimcodesrescue(dcdraft)
    for (i in 1:3) { colnames(dcdraft[[i]])[[2]]<-'label:en'}
@@ -95,7 +95,7 @@
 
 #' Load data from publicly available Ameco, and is past vintages
 #'
-#' @param code a RestFul code combination respecting Ameco dimensions GEO.x.x.x.x.INDICATOR, e.g. \code{CAN.1.0.99+0.0.UVGD}
+#' @param code a RestFul code combination respecting Ameco dimensions COUNTRY.x.x.x.x.INDICATOR, e.g. \code{CAN.1.0.99+0.0.UVGD}
 #' @param year year of the release. Default 0 means current/latest release
 #' @param release character singleton 'autumn' or 'spring'. Ignored if year is 0 and thus points to current release.
 #' @param as how to output the result: \code{md3}: as md3 object with full metadata, \code{2d}: as a data.table with periods as column names, \code{1d} resp. \code{data.table}: as fully stacked data.table, \code{array}: as multi-dim array, \code{zoo}: as \code{\link[zoo]{zooreg}} time series object.
@@ -157,13 +157,15 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
   }
   if (!inclaggreg) {
 
-    selcc=MD3:::.getdimnames(tempameco)[['GEO']];
+    selcc=MD3:::.getdimnames(tempameco)[['COUNTRY']];
     selcc=selcc[c(head(grep('^EU',selcc),1),head(grep('^EA',selcc),1),grep('[0-9]|_',selcc,invert = TRUE))]
     if (any(grepl('\\+',temp[[1]]))) {   selcc=unique(c(strsplit(temp[[1]],split='\\+')[[1]],selcc))}
     #browser();
-    #tempameco=MD3:::.md3get(tempameco,list(GEO=selcc,TRAFO=character(),INDICATOR=character(),TIME=character()))
-    tempameco=MD3:::.md3_class(MD3:::.dt_class(tempameco)[GEO %in% selcc,])
-    mydc=attr(tempameco,'dcstruct'); mydc[['GEO']]=mydc[['GEO']][selcc,]; attr(tempameco,'dcstruct')<-mydc
+    #tempameco=MD3:::.md3get(tempameco,list(COUNTRY=selcc,TRAFO=character(),INDICATOR=character(),TIME=character()))
+    tempdt=MD3:::.dt_class(tempameco)
+    tempameco=MD3:::.md3_class(tempdt[tempdt$COUNTRY %in% selcc,])
+    #tempameco=MD3:::.md3_class(MD3:::.dt_class(tempameco)[COUNTRY %in% selcc,])
+    mydc=attr(tempameco,'dcstruct'); mydc[['COUNTRY']]=mydc[['COUNTRY']][selcc,]; attr(tempameco,'dcstruct')<-mydc
 
   }
   if (!length(code)) return(tempameco)
@@ -174,7 +176,7 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
 
   if (nchar(timeper)>7) if (endPeriod<startPeriod) {stop('startPeriod cant be after endPeriod')}
   mout=MD3:::.md3get(tempameco,paste(code,timeper),drop = FALSE)
-  if (length(ccode)) { mout=.countrycodefixer(mout,NULL,'GEO',ccode)}
+  if (length(ccode)) { mout=.countrycodefixer(mout,NULL,'COUNTRY',ccode)}
   if (nbdim==4) {
     if (drop) mout=MD3:::drop.md3(mout)
     return(MD3:::.getas(mout,as))
@@ -184,12 +186,12 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
     dout=MD3:::.dt_class(mout)
     dout=data.table::copy(dout)
      dout[['VARIABLE']] = paste0(dout[['TRAFO']],'_',dout[['INDICATOR']])
-     dout=dout[,c('GEO','VARIABLE','TIME','_.obs_value'),with=FALSE]
+     dout=dout[,c('COUNTRY','VARIABLE','TIME','_.obs_value'),with=FALSE]
      dnm= unique(dout[['VARIABLE']]) #attr(dout,'dcstruct')
-     tempvbl=data.frame(dnm,attr(dout,'dcstruct')[['INDICATOR']][gsub('^.*_','',dnm),2],stringsAsFactors = FALSE)
+     tempvbl=data.frame(dnm,attr(mout,'dcstruct')[['INDICATOR']][gsub('^.*_','',dnm),2],stringsAsFactors = FALSE)
      colnames(tempvbl)=c('code','label:en'); rownames(tempvbl)=dnm
 
-     mydc=list(GEO=attr(dout,'dcstruct')[['GEO']],VARIABLE=tempvbl,TIME=attr(dout,'dcstruct')[['TIME']])
+     mydc=list(COUNTRY=attr(mout,'dcstruct')[['COUNTRY']],VARIABLE=tempvbl,TIME=attr(mout,'dcstruct')[['TIME']])
       attr(dout,'dcstruct')=NULL
      rm(mout); mout=data.table::copy(dout)
      mout=MD3:::.md3_class(mout);
@@ -210,11 +212,11 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
 
   if (length(dim)) {
     #its about a dimension:
-    if (is.numeric(dim)) dim=c('GEO','TRAFO','INDICATOR')[dim]
-    if (grepl('^geo|^cou',tolower(dim))) { dim='GEO'}
+    if (is.numeric(dim)) dim=c('COUNTRY','TRAFO','INDICATOR')[dim]
+    if (grepl('^geo|^cou',tolower(dim))) { dim='COUNTRY'}
     if (grepl('^trafo',tolower(dim))) { dim='TRAFO'}
     if (grepl('^indic|^varia|^subj',tolower(dim))) { dim='INDICATOR'}
-    if (!(dim %in% c('GEO','TRAFO','INDICATOR'))) stop('dimension ',dim,' is not available from Ameco')
+    if (!(dim %in% c('COUNTRY','TRAFO','INDICATOR'))) stop('dimension ',dim,' is not available from Ameco')
     thatameco=names(.mdstats_providers$cachedmd3s()); thatameco=thatameco[grepl('AMECO',thatameco)][1]
     if (!length(thatameco)) { temp=mdAmeco(); thatameco='AMECO00' }
     odn=MD3:::.getdimcodes(.mdstats_providers$cachedmd3s(thatameco))
@@ -259,7 +261,7 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
     }
 
     cat('\nAmeco has the following dimensions excl TIME:\n')
-    cat('GEO, INDICATOR\n')
+    cat('COUNTRY, INDICATOR\n')
     cat('Run e.g. helpmdAmeco(dim="INDICATOR", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension INDICATOR')
     return(invisible(NULL))
   } else stop('???')
