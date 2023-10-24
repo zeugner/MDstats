@@ -257,13 +257,27 @@
 
 
     actdn=MD3:::.getdimnames(mout)
-    mydc=lapply(as.list(names(actdn)), function(i) as.data.frame(possdn[[i]][actdn[[i]],,drop=FALSE],stringsAsFActors=FALSE))
-    names(mydc)=names(actdn)
+    nxt=setdiff(names(actdn),'TIME')
+    if (length(nxt)) {
+    mydc=lapply(as.list(names(actdn[nxt])), function(i) as.data.frame(as.data.frame(possdn[[i]],stringsAsFactors=FALSE)[actdn[[i]],,drop=FALSE],stringsAsFActors=FALSE))
+    names(mydc)=names(actdn[nxt])
+     if (anyNA(unlist(lapply(mydc,function(x) x[,1])))) {
+       #in case the codelist was incomplete
+       if (exists('actdn',parent.frame())) { warning('it was not possible to provide complete labels')
+        for (j in names(mydc)) { mydc[[j]][,1]=actdn[[j]][,1]}
+       } else {
+        trhowaway=.fetchfullcodelists(mycode,verbose=verbose,forcerefresh = TRUE)
+        return(.sdmxasmd3(mycode=mycode,drop=drop,metadata=metadata,verbose=verbose, ccode=ccode, startPeriod=startPeriod, endPeriod=endPeriod))
+       }
+     }
+
     if (any(unlist(lapply(mydc,is.null)))) mydc[unlist(lapply(mydc,is.null))]=actdn[unlist(lapply(mydc,is.null))]
     #browser()
     ixempt=!unlist(lapply(mydc,length))
-    if (any(ixempt)) mydc[ixempt]=actdn[ixempt]
+    if (any(ixempt)) mydc[ixempt]=actdn[nxt][ixempt]
+    if (length(mydc)==length(actdn)-1) {mydc[['TIME']]=actdn[['TIME']]}
     mout=MD3:::.setdimcodes(mout,mydc)
+    }
   }
   if (drop) mout=MD3:::drop.md3(mout)
   if (!length(ccode)) return(mout)
@@ -576,7 +590,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
   possdn
 }
 
-.fetchfullcodelists = function(mycode,verbose=FALSE,sdmxdataflow=NULL) {
+.fetchfullcodelists = function(mycode,verbose=FALSE,sdmxdataflow=NULL,forcerefresh=FALSE) {
   supersilent=FALSE;if (!length(verbose)) { supersilent=TRUE; verbose=FALSE}
   lcode=.fixSdmxCode(mycode)
   #browser()
@@ -585,7 +599,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 
   biglcl=.mdstats_providers$allcodelists()
   isthere=unlist(lapply(biglcl[[lcode[1]]][paste0(lcode[1],'/',possdn)],length))
-  if (!length(isthere) || !all(isthere)) {
+  if (!length(isthere) || !all(isthere) || forcerefresh) {
     if (!supersilent) message('Fetching dimension metadata for ',lcode[2],' from ',lcode[1], ', this might take some time')
     xurl=.rsdmxurl(lcode[1],resource='datastructure',resourceId = dsdid)
     mysuffix=try(.mdstats_providers$table()[lcode[1],'RefDetailSuffix'],silent=TRUE)
