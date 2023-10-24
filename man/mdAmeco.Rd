@@ -20,7 +20,7 @@ mdAmeco(
 )
 }
 \arguments{
-\item{code}{a RestFul code combination respecting Ameco dimensions GEO.x.x.x.x.INDICATOR, e.g. \code{CAN.1.0.99+0.0.UVGD}}
+\item{code}{a RestFul code combination respecting Ameco dimensions COUNTRY.x.x.x.x.INDICATOR, e.g. \code{CAN.1.0.99+0.0.UVGD}}
 
 \item{year}{year of the release. Default 0 means current/latest release}
 

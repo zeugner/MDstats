@@ -2,7 +2,6 @@
 % Please edit documentation in R/core.R
 \name{mdSdmx}
 \alias{mdSdmx}
-\alias{mds}
 \title{Get data from an SDMX source}
 \usage{
 mdSdmx(
@@ -16,21 +15,9 @@ mdSdmx(
   ccode = getOption("defaultcountrycode", "EC"),
   verbose = FALSE
 )
-
-mds(
-  code,
-  startPeriod = "",
-  endPeriod = "",
-  drop = TRUE,
-  labels = FALSE,
-  as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",
-    "data.frame"),
-  ccode = getOption("defaultcountrycode", "EC"),
-  verbose = FALSE
-)
 }
 \arguments{
-\item{code}{a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See Details}
+\item{code}{a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See \code{\linnk{mds}} for an example}
 
 \item{startPeriod}{optional, character, integer, timo or date-like class. default empty string means to fetch data including  the first available period}
 
@@ -38,7 +25,7 @@ mds(
 
 \item{drop}{if TRUE, drop any singleton dimensions (see also drop.md3)}
 
-\item{labels}{add the descriptions for each dimension element, e.g. "Austria" for "AUT". You can check those with function \code{\link[MD3]{dimcodes}}}
+\item{labels}{add the descriptions for each dimension element, e.g. "Belgium" for "BEL". You can check those with function \code{\link[MD3]{dimcodes}}}
 
 \item{as}{how to output the result: \code{md3}: as md3 object with full metadata, \code{2d}: as a data.table with periods as column names, \code{1d} resp. \code{data.table}: as fully stacked data.table, \code{array}: as multi-dim array, \code{zoo}: as \code{\link[zoo]{zooreg}} time series object.}
 
@@ -53,51 +40,21 @@ depending on \code{as}, an \code{md3}, \code{array}, \code{numeric}, \code{data.
 Get data from an SDMX source
 }
 \details{
-This function tweaks the package \code{rsdmx}  to load data.
+\code{mdSdmx} is a function for loading from SDMX data sources. \code{\link{mds}} encompasses that one, and will be broadened to other data sources at a later stage.
 }
-\section{SDMX query}{
-
-A restful SDMX query combines Provider, Dataflow and Dimension selectors. Take the example 'ECB/EXR/A.GBP+CHF.EUR.SP00.A'
-\itemize{
-  \item 'ECB' designates the provider ECB (see helpmds() for a list of providers)
-  \item 'EXR' designates the ECB's dataflow 'EXR' about exchange rates (see helpmds('ECB') for a list of ECB dataflows)
-  \item A.GBP+CHF.EUR.SP00.A is the dimension selector: See helpmds('ECB/EXR') for what dimensions exist in ECB/EXR)
-}
-Here,
-\itemize{
-\item 'A' denotes annual frequency from the FREQ dimension
-\item 'GBP+CHF' denote British pound and Swiss frank from the currency dimension
-\item 'EUR' denotes the currency denominator
-\item 'SP00' denotes spot rates
-\item 'A' denotes average over periods (here annual averages)
-}
-Omit dimension codes to load all elements of a dimension, i.e. ECB/EXR/A..EUR.SP00.A to download exchange ratesw of the euro vis-a-vis all currencies
-Note that a query is normally taken as Provider/Dataflow/Selectors. The combination with dots Provider.Dataflow.Selectors is not tolerated here.
-Note that dataflow codes may be case-sensitive
-
-To see which providers are avaialble, and to find query codes, use \code{\link{helpmds}}, or check the websites of the providers, such as \url{https://data.ecb.europa.eu/data/datasets}. Looking on \url{https://db.nomics.world} is a faster alternative for many providers.
-
-\code{mdSdmx} is a function for loading from SDMX data sources. \code{mds} encompasses that one, and will be broadened to other data sources at a later stage.
-}
-
 \examples{
-mds("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A")
-mds("ECB/EXR/Q.PLN+CZK+SEK.EUR.SP00.A",as = '2d')
 
-o1=mds("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
-dimcodes(o1)
-
-
-mdSdmx("OECD/EO/AUT+FRA.GDP.Q")
-foo=mds("ESTAT/prc_hpi_q/Q..I15_Q.")
-
+foo=mdSdmx("ESTAT/prc_hpi_q/Q..I15_Q.")
 foo[AT:BG.TOTAL.y2020:y]
 
 mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
-mds('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
+mdSdmx('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 
+mdSdmx("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
+#is the same as
 mds("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
 
+#but mds can also do providers that helpmds() marks with an asterisk, such as AMECO
 }
 \seealso{
 \code{\link{helpmds}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
