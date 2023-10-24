@@ -588,6 +588,10 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
   if (!length(isthere) || !all(isthere)) {
     if (!supersilent) message('Fetching dimension metadata for ',lcode[2],' from ',lcode[1], ', this might take some time')
     xurl=.rsdmxurl(lcode[1],resource='datastructure',resourceId = dsdid)
+    mysuffix=try(.mdstats_providers$table()[sprovider,'RefDetailSuffix'],silent=TRUE)
+    if (is(mysuffix,'try-error')) mysuffix='' else if (!length(mysuffix)) mysuffix='' else if (is.na(mysuffix)) mysuffix=''
+    if (nchar(mysuffix)) xurl=paste0(xurl,mysuffix)
+
     if (verbose) cat(xurl,'\n')
     dfdsd=rsdmx::readSDMX(xurl,verbose=verbose)
     dfcl=.extractDimcodes(dfdsd)
