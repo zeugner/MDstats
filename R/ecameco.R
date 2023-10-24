@@ -129,9 +129,27 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
                    drop=TRUE, ccode=getOption('defaultcountrycode','EC'), startPeriod=NULL, endPeriod=NULL,
                    nbdim=3,inclaggreg=FALSE,verbose=TRUE,...) {
 
+  if (is.character(startPeriod)) if (!nchar(startPeriod)) startPeriod=character()
+  if (is.character(endPeriod  )) if (!nchar(endPeriod  )) endPeriod  =character()
+
+
+
   if (length(code)>1) { warning('code has to be singleton'); code=code[1]}
   if (is.character(code)) {
-    if (any(grepl('/',code))) code=gsub('^.*/','',code)
+    if (any(grepl('/',code)) & release <1) {
+      if (nchar(gsub('[^/]','',code))>1) { code=gsub('^[^/]*/','',code)}
+        srel=toupper(gsub('/.*$','',code))
+        code=gsub('^.*/','',code)
+        if (!grepl('[0-9]',srel)) {
+          if (exists('iAmeco')) { return(get('iAmeco')(code,startPeriod=startPeriod,endPeriod=endPeriod,as=as,ccode=ccode,revision=substr(srel,0,1),drop ))}
+        } else {
+          sfcst='A'; if (grepl('S',srel)) sfcst='S'
+          return(mdAmeco(code,year = gsub('[^0-9]','',srel),release = sfcst,as=as,drop=drop,ccode = ccode,startPeriod = startPeriod, endPeriod = endPeriod,nbdim = 3 ))
+        }
+
+
+
+      }
     if (nchar(code[1])==0) code=character() else { code=gsub('_','.',code)}
   }
   if (length(code)) {
@@ -169,8 +187,10 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
 
   }
   if (!length(code)) return(tempameco)
-  if (!missing(startPeriod)) { startPeriod=as.integer(startPeriod)  }
-  if (!missing(endPeriod)) { endPeriod=as.integer(endPeriod)  }
+
+
+  if (length(startPeriod)) { startPeriod=as.integer(startPeriod)  }
+  if (length(endPeriod)) { endPeriod=as.integer(endPeriod)  }
   timeper=paste0('.',ifelse(length(startPeriod),startPeriod,""),":",ifelse(length(endPeriod),endPeriod,""))
   if (timeper=='.:') timeper='.'
 
@@ -255,7 +275,11 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
   if (toupper(vcode[1])=='AMECO') {vcode=character()}
   if (!length(vcode)) {
     if (sdmxlike) {
-      cat('\nAMECO has only one dataflow available via mds: "AMECO/A"\n')
+      if (exists('iAmeco')) {
+        cat('\nAMECO has three  key dataflow available via mds: "AMECO/C" is current Ameco, AMECO/P the latest publicly available Ameco, and AMECO/R restricted Ameco\n')
+      } else {
+        cat('\nAMECO has one key dataflow available via mds: "AMECO/A"\n')
+      }
       cat('It may be used like mds("AMECO/A/FRA+AUT.1_0_0_0_UVGD")\n')
       cat('Use function mdAmeco() for more options, in particular to split Ameco data into more dimnesions, or to retrieve earlier vintages \n')
     }
@@ -263,6 +287,8 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
     cat('\nAmeco has the following dimensions excl TIME:\n')
     cat('COUNTRY, INDICATOR\n')
     cat('Run e.g. helpmdAmeco(dim="INDICATOR", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension INDICATOR')
+    cat('in addition there are the following dataflows, denoting spring forecast (SF) and autumn foreacast (AF) of the respective year\n')
+    cat(paste(unlist(lapply(as.list(2011:2021),function(x) c(paste0('SF',x),paste0('AF',x)))),collapse=', '),'\n')
     return(invisible(NULL))
   } else stop('???')
 }

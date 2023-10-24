@@ -1,9 +1,9 @@
 #' @include core.R
-.rsdmxfixer = function () {
+.rsdmxfixer = function (tprovs=NULL) {
   if (!require(rsdmx)) stop('needs packages rsdmx installed')
 
   #suppressWarnings(utils::data('providertable'))
-  .dprovs =  providertable #.loadproviders()
+  if (is.null(trpovs)) tprovs =  providertable #.loadproviders()
   oProvs=rsdmx::getSDMXServiceProviders()
   #oProvs@providers[[2]]@builder@regUrl<- "https://data-api.ecb.europa.eu/service"
   #oProvs@providers[[2]]@builder@repoUrl<- "https://data-api.ecb.europa.eu/service"
@@ -22,12 +22,12 @@
 
   names(urlProvs) = idProvs
 
-  for (i in .dprovs[[1]]) {
+  for (i in tprovs[[1]]) {
     if (!match(i,idProvs,nomatch=0)) { next }
     ix=which(idProvs==i)
-    if (.dprovs[i,'PrimRepoUrl']!=oProvs@providers[[ix]]@builder@repoUrl) {
-    oProvs@providers[[ix]]@builder@regUrl = oProvs@providers[[ix]]@builder@repoUrl = .dprovs[i,'PrimRepoUrl']
-    oProvs@providers[[ix]]@name = .dprovs[i,'Longname']
+    if (tprovs[i,'PrimRepoUrl']!=oProvs@providers[[ix]]@builder@repoUrl) {
+    oProvs@providers[[ix]]@builder@regUrl = oProvs@providers[[ix]]@builder@repoUrl = tprovs[i,'PrimRepoUrl']
+    oProvs@providers[[ix]]@name = tprovs[i,'Longname']
     }
 
   }
@@ -164,15 +164,16 @@
 providertable=NULL
 
 .onLoad = function (libname, pkgname) {
-  require(rsdmx);
+  require(rsdmx,quietly = TRUE);
 
   utils::data("providertable", package=pkgname, envir=parent.env(environment()))
   providertable<<-.dprovs
-  .rsdmxfixer()
+  tryit=try(.rsdmxfixer(.dprovs),silent=TRUE)
+  if (is(tryit,'try-error')) message('Fixing the rsdmx package did not work out, which impairs access to some SDMX sourves, notably IMF.\nTry to run MDstats:::.rsdmxfixer() manually')
 
 
 }
 
 if (!exists('.mdstats_providers')) .mdstats_providers = .mdstats_providerscreate(providertable)
-#providertable=.dprovs
+#providertable=tprovs
 #.mdstats_providers=.mdstats_providerscreate(providertable)
