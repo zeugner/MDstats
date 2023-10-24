@@ -391,6 +391,49 @@
 
 #' Get data from an SDMX source
 #'
+#' @param code a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See \code{\linnk{mds}} for an example
+#' @param startPeriod optional, character, integer, timo or date-like class. default empty string means to fetch data including  the first available period
+#' @param endPeriod placeholder fo optional, character, integer, timo or date-like class. default empty string means to fetch data including  the last available observation
+#' @param drop if TRUE, drop any singleton dimensions (see also drop.md3)
+#' @param labels add the descriptions for each dimension element, e.g. "Belgium" for "BEL". You can check those with function \code{\link[MD3]{dimcodes}}
+#' @param as how to output the result: \code{md3}: as md3 object with full metadata, \code{2d}: as a data.table with periods as column names, \code{1d} resp. \code{data.table}: as fully stacked data.table, \code{array}: as multi-dim array, \code{zoo}: as \code{\link[zoo]{zooreg}} time series object.
+#' @param ccode ccode If not \code{ccode==NULL}, then the function attempts to convert to ccode destination such as 'iso2c', 'EC', 'iso3c'. See \code{\link[MDcountrycode]{ccode}} for permissible values.  \code{\link[MDcountrycode]{defaultcountrycode}} for defining this value as a session-wide option.
+#' @param verbose if TRUE, this function chatters about what it is doing, notably contacting servers
+#' @return depending on \code{as}, an \code{md3}, \code{array}, \code{numeric}, \code{data.table}, \code{zoo}, \code{2d} dat.table, \code{1d} stacked data.table, or data.frame    containing the requested data
+#' @details \code{mdSdmx} is a function for loading from SDMX data sources. \code{\link{mds}} encompasses that one, and will be broadened to other data sources at a later stage.
+#'
+#'
+#' @seealso \code{\link{helpmds}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
+#' @examples
+#'
+#' foo=mdSdmx("ESTAT/prc_hpi_q/Q..I15_Q.")
+#' foo[AT:BG.TOTAL.y2020:y]
+#'
+#' mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
+#' mdSdmx('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
+#'
+#' mdSdmx("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
+#' #is the same as
+#' mds("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
+#'
+#' #but mds can also do providers that helpmds() marks with an asterisk, such as AMECO
+#' @export
+mdSdmx = function(code, startPeriod='',endPeriod='', drop=TRUE, labels=FALSE,
+                  as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
+                  ccode=getOption('defaultcountrycode','EC'), verbose=FALSE) {
+  if (missing(code)) return(helpmds())
+  if (match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$table()[[1]],nomatch=0)) {
+    mout=.sdmxasmd3(code,drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
+  } else {
+    stop('Provider not available')
+  }
+  MD3:::.getas(mout,as[[1L]])
+
+}
+
+
+#' Get data from an SDMX or another statistical source
+#'
 #' @param code a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See Details
 #' @param startPeriod optional, character, integer, timo or date-like class. default empty string means to fetch data including  the first available period
 #' @param endPeriod placeholder fo optional, character, integer, timo or date-like class. default empty string means to fetch data including  the last available observation
@@ -420,7 +463,7 @@
 #' Note that a query is normally taken as Provider/Dataflow/Selectors. The combination with dots Provider.Dataflow.Selectors is not tolerated here.
 #' Note that dataflow codes may be case-sensitive
 #'
-#' To see which providers are avaialble, and to find query codes, use \code{\link{helpmds}}, or check the websites of the providers, such as \url{https://data.ecb.europa.eu/data/datasets}. Looking on \url{https://db.nomics.world} is a faster alternative for many providers.
+#' To see which providers are available, and to find query codes, use \code{\link{helpmds}}, or check the websites of the providers, such as \url{https://data.ecb.europa.eu/data/datasets}. Looking on \url{https://db.nomics.world} is a faster alternative for many providers.
 #'
 #' \code{mdSdmx} is a function for loading from SDMX data sources. \code{mds} encompasses that one, and will be broadened to other data sources at a later stage.
 #' @seealso \code{\link{helpmds}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}
@@ -432,32 +475,18 @@
 #' dimcodes(o1)
 #'
 #'
-#' mdSdmx("OECD/EO/AUT+FRA.GDP.Q")
+#' mds("OECD/EO/AUT+FRA.GDP.Q")
 #' foo=mds("ESTAT/prc_hpi_q/Q..I15_Q.")
 #'
 #' foo[AT:BG.TOTAL.y2020:y]
 #'
-#' mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
+#' mds("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
 #' mds('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 #'
 #' mds("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
 #'
-#' @export
-mdSdmx = function(code, startPeriod='',endPeriod='', drop=TRUE, labels=FALSE,
-                  as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
-                  ccode=getOption('defaultcountrycode','EC'), verbose=FALSE) {
-  if (missing(code)) return(helpmds())
-  if (match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$table()[[1]],nomatch=0)) {
-    mout=.sdmxasmd3(code,drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
-  } else {
-    stop('Provider not available')
-  }
-  MD3:::.getas(mout,as[[1L]])
-
-}
-
-
-#' @rdname mdSdmx
+#' mds("AMECO/A/AT+FR+BE.1_0_0_0_UVGD", as='data.table')
+#'
 #' @export
 mds = function(code, startPeriod='', endPeriod='', drop=TRUE, labels=FALSE,
                     as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
