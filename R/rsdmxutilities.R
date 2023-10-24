@@ -169,7 +169,7 @@ providertable=NULL
   utils::data("providertable", package=pkgname, envir=parent.env(environment()))
   providertable<<-.dprovs
   tryit=try(.rsdmxfixer(.dprovs),silent=TRUE)
-  if (is(tryit,'try-error')) {browser(); message('Fixing the rsdmx package did not work out, which impairs access to some SDMX sourves, notably IMF.\nTry to run MDstats:::.rsdmxfixer() manually')}
+  if (is(tryit,'try-error')) {message('Fixing the rsdmx package did not work out, which impairs access to some SDMX sourves, notably IMF.\nTry to run library(MDstats) again')}
 
 
 }
