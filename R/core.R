@@ -1005,6 +1005,7 @@ helpmds = function(query='', pattern = "", dim = NULL, verbose = TRUE){
       }
     }
     if (is.numeric(whichdim)) whichdim=colnames(x)[whichdim]
+<<<<<<< HEAD
     notgood=character()
     if (!is.null(mydc)) {
 
@@ -1022,6 +1023,23 @@ helpmds = function(query='', pattern = "", dim = NULL, verbose = TRUE){
     }
       y=MDcountrycode:::.fixcountrycode(x,tocode = tocode,cols2fix = setdiff(whichdim,notgood))
 
+=======
+
+    if (!is.null(mydc)) {
+
+      for (i in whichdim) {
+        mydic=MDcountrycode:::.fixcountrycode(mydc[[i]],tocode = tocode,cols2fix = 'code')
+        if (NCOL(mydic)>1) { myvec=mydic[,1,drop=TRUE]} else {myvec=mydic}
+        if (anyDuplicated(myvec)) {
+          warning('Not converting country codes due to duplicates relating to ', utils::head(myvec[duplicated(myvec)],1),', etc')
+          next;
+        }
+        rownames(mydic)=myvec
+        mydc[[i]] = mydic;
+      }
+    }
+    y=MDcountrycode:::.fixcountrycode(x,tocode = tocode,cols2fix = whichdim)
+>>>>>>> 0004f51c53be2db97e3ff7da0ebabdb79cf1ece2
     if (!is.null(mydc)) {attr(y,'dcstruct') =mydc}
     if (MD3:::.md3_is(inmd3ordt))  y=MD3:::.md3_class(y)
     return(y)
