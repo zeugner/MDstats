@@ -9,7 +9,7 @@
 #'
 #'
 #' This package is still under development; there are certainly some bugs lurking around
-#' Build date: 2024-01-09
+#' Build date: 2024-01-11
 #'
 #'
 #' Conversion to and from \code{data.table}, tibble, and \code{pdata.frame} is to be added

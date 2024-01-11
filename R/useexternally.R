@@ -15,7 +15,7 @@
 
   suppressWarnings(require(MDecfin,quietly = TRUE))
   #MDcountrycode::defaultcountrycode('EC') # uncomment this if you want all country codes to be the same
-  source('C:/Users/zeugnst/rpackages/MDstats/sourceCode/useexternally.R')
+
   loadExternally(as.list(args))
 
   #examples to be run from shell:
@@ -74,7 +74,7 @@
 
 
 
-  if (file.exists(paste0(opdir,'/loadMD.R'))) {cat('Overwriting ',opdir,'/loadMD.R\n',sep = "")} else {cat('Creating ',opdir,'/loadMD.R\n',sep = "")}
+  if (file.exists(paste0(opdir,'/loadMD.R'))) {cat('Overwriting ',opdir,'/loadMD.R and',opdir,'/loadMD.cmd' , ' \n',sep = "")} else {cat('Creating ',opdir,'/loadMD.R and',opdir,'/loadMD.cmd' , '\n',sep = "")}
   cat(.basicscript,file=paste0(opdir,'/loadMD.R'))
   cat('Check the comments at the end of that file for usage instructions and examples')
   cat(paste0(.rspath," --arch x64 --no-save ",paste0(opdir,'/loadMD.R')," %1 %2 %3"), file=paste0(opdir,'/loadMD.cmd'))
@@ -85,43 +85,60 @@
 
 
 
-#' Function and script to make mds callable form otehr applications, such as Stata
+#' Function and script to make mds callable form other applications, such as Stata
 #'
-#' This function is meant to be called from other applications via RScript and arguments. If you don't know R look below under the section Stata Users resp Non-Stata Users
-#' @param \dots either a character call to mds or a related function (such as ECB/EXR/A.JPY.EUR.SP00.A), or a list containing that call, aswell as outpath and ascountrypanel
+#' This function is meant to be called from other applications via RScript and arguments. If you don't know R, look below under the section Stata Users resp Non-Stata Users
+#' @param \dots either a character call (such as "ECB/EXR/A.JPY.EUR.SP00.A") to mds or a related function , or a list containing that call, aswell as outpath and ascountrypanel
 #' @param outpath Character. the dta or csv file to be created be the function (default C:/Users/Public/statautils/queryresult.dta). If empty, nullor empty string, then loadExternally simply returns the object on the R console
 #' @param ascountrypanel logical (Default TRUE). If TRUE, then this attempts to reshape the result into a panel form with "variables" being the columns, and caountries and TIME being identified in the first column. If FALSE, then teh result is fully stacked, and contains observation attributes.
 #' @return the file path to outpath, or a data.table (if outpath=='')
 #' @details if left empty, then this function creates the script loadMD.R to be called with R script.
 #' The default path for that script is C:/Users/Public/statautils/loadMD.R but than be changed using outpath.
-#' In the latter case like loadExternally(outpath='c:/balbal.R') can also be used in non-interactive mode
+#' (In the latter case like \code{loadExternally(outpath='c:/balbal.R')} can also be used in non-interactive mode)
+#'
+#' this also creates the wrapper file loadMD.cmd which is easier to handle than using loadMD.R directly
+#' You can call it by \code{C:/Users/Public/statutils/loadMD Arg1 Arg2 Arg3}  where the first Argumetn \code{Arg1} is mandatory.
+#'
+#' loadMD accepts the following arguments
+#' \itemize{
+#' \item{Arg1}{ (mandatory): code to be loaded via mds, like ESTAT/prc_hpi_a/A.TOTAL..BE. Can be prefixed with \code{nomics:}, \code{ameco:} or \code{imfweo}: to access specific functions other than \code{mds}}
+#' \item{Arg2}{ (optional): 1 or 0.  Setting this to 1 (default) makes the final file a country panel, with geo and time dimensions in the first column
+#'   and all other dimensions forming separate variables. Or 0:make the result fully stacked, with n identifier columns and one obs_value column}
+#' \item{Arg3}{  (optional): the filepath where to save the result. Must be either .csv or .dta (Stata) file. Default is the \code{defaultoutpath} variable defined in loadMD.R}
+#' }
+#'
+#'  Pro-tip: IF you want all country codes to look the same (e.g. all are UK rather than GB or GBR), then uncomment the line with \code{defaultcountrycode} in C:/Users/Public/statautils/loadMD.R
+#'  check \code{\link{defaultcountrycode}} for help on that.
 #'
 #' @section For Stata Users that dont know R:
 #'
-#'  1) make sure you have internet connection from R. Run e.g. \code{readLines('https://example.com',n = 1)} to check that
-#'  2) make sure you have readstata13 installed. if \code{library(readstata13)} does not work, call \code{install.packages('readstata13')}
-#'  3) run\code{loadExternally()}. Press Enter, and then type \code{s} and Enter
+#'  \itemize{
+#'   \item{1)}{ make sure you have internet connection from R. Run e.g. \code{readLines('https://example.com',n = 1)} to check that}
+#'   \item{2)}{ make sure you have readstata13 installed. if \code{library(readstata13)} does not work, call \code{install.packages('readstata13')}}
+#'   \item{3)}{ run\code{loadExternally()}. Press Enter, and then type \code{a} and Enter}
+#'  }
 #'
 #'  Now from Stata, type e.g.
 #'
 #'  \code{shell "C:\\Users\\Public\\statautils\\loadmd" ECB/EXR/A.JPY+PLN.EUR.SP00.A}
+#'
 #'  \code{use "C:\\Users\\Public\\statautils\\queryresult.dta", clear}
 #'
 #'  or
 #'
 #'  \code{shell "C:\\Users\\Public\\statautils\\loadmd" AMECO/C/BE+AT.1_0_0_0_UVGD 0}
+#'
 #'  \code{use "C:\\Users\\Public\\statautils\\queryresult.dta", clear}
 #'
-#'  Pro-tip: IF you want all country codes to look the same (e.g. all are UK rather than GB or GBR), then uncomment the line with \code{defaultcountrycode} in C:/Users/Public/statautils/loadMD.R
+#' See section 'Details' above for explaining those arguments. See \code{\link{helpmds}} for understanding the structure of dataset codes and dimensions
 #'
 #'
 #' @section For non-Stata Users that dont know R:
-#'
-#'  1) make sure you have internet connection from R. Run e.g. \code{readLines('https://example.com',n = 1)} to check that
-#'  2) make sure you have readstata13 installed. if \code{library(readstata13)} does not work, call \code{install.packages('readstata13')}
-#'  3) run\code{loadExternally()}. Press Enter, and then type \code{a} and Enter
-#'
-#'  Now from Shell, type e.g.
+#'  \itemize{
+#'   \item{1)}{ make sure you have internet connection from R. Run e.g. \code{readLines('https://example.com',n = 1)} to check that}
+#'   \item{2)}{ run\code{loadExternally()}. Press Enter, and then type \code{a} and Enter}
+#'  }
+#'  Now from DOS/Shell/Console (Windows+R, then CMD), type e.g.
 #'
 #'  \code{C:\\Users\\Public\\statautils\\loadmd ECB/EXR/A.JPY+PLN.EUR.SP00.A}
 #'
@@ -130,7 +147,7 @@
 #'  \code{C:\\Users\\Public\\statautils\\loadmd AMECO/C/BE+AT.1_0_0_0_UVGD 1 c:/Users/Public/test.csv}
 #'  to create a CSV file called \code{test.csv}
 #'
-#'  Pro-tip: IF you want all country codes to look the same (e.g. all are UK rather than GB or GBR), then uncomment the line with \code{defaultcountrycode} in C:/Users/Public/statautils/loadMD.R
+#'  See section 'Details' above for explaining those arguments. See \code{\link{helpmds}} for understanding the structure of dataset codes and dimensions
 #'
 #' @seealso  \code{\link{helpmds}} if something does not work. e.g. \code{helpmds('ESTAT/prc_hpi_a/A.TOTAL..AT.')} to find out why that code does not work
 #'  \code{\link{mds}} for loading from major data sources.

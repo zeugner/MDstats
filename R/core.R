@@ -664,8 +664,14 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 
 
     }
-    cat(capture.output(print(head(mydf,50))),sep='\n')
-    if (NROW(mydf)>50) { cat('plus ',NROW(mydf)-50, ' more.')}
+
+    if (NROW(mydf)>50) {
+      cat(capture.output(print(mydf[sample(NROW(mydf),50),])),sep='\n')
+      cat('plus ',NROW(mydf)-50, ' more.')
+    } else {
+
+      cat(capture.output(print(head(mydf,50))),sep='\n')
+    }
     cat('Run helpmds("',vq[1],', pattern="YOUREXPRESSION") to search for specific terms\n',sep = '')
     cat('Run xx=helpmds("',vq[1],'") to load the list of dataflows into variable xx\n',sep='')
     return(invisible(mydf))
