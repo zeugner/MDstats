@@ -151,6 +151,7 @@
   if (verbose) cat('\nreading from ',myurl,' ...\n')
   ressdmx <- try(rsdmx::readSDMX(myurl,verbose = verbose),silent=TRUE)
   if (is(ressdmx,'try-error')) stop('Could not fetch data for query code ',mycode,'.\nTry running helpmds("',mycode,") to find out why.\n")
+  if (!length(ressdmx)) { stop('The web request to ',myurl, ' returned NULL, perhaps for latency resons. Please try again.' ) }
   if (justxml) return(ressdmx)
   if (class(ressdmx)=='SDMXCompactData') {
     res=rsdmx:::as.data.frame.SDMXCompactData(ressdmx)
@@ -987,33 +988,42 @@ helpmds = function(query='', pattern = "", dim = NULL, verbose = TRUE){
 }
 
 
+
 .countrycodefixer = function(inmd3ordt,provider=NULL,whichdim=0,tocode=defaultcountrycode()) {
 
 
 
-  x=MD3:::.dt_class(inmd3ordt)
-  mydc=attr(x, "dcstruct")
-  if (any(whichdim<1)) {
-    if (is.null(mydc)) {
-      whichdim=.findgeodim(colnames(x),provider)
-    } else{
-      whichdim=.findgeodim(names(mydc),provider)
+
+
+    x=MD3:::.dt_class(inmd3ordt)
+    mydc=attr(x, "dcstruct")
+    if (any(whichdim<1)) {
+      if (is.null(mydc)) {
+        whichdim=.findgeodim(colnames(x),provider)
+      } else{
+        whichdim=.findgeodim(names(mydc),provider)
+      }
     }
-  }
-  if (is.numeric(whichdim)) whichdim=colnames(x)[whichdim]
-  y=MDcountrycode:::.fixcountrycode(x,tocode = tocode,cols2fix = whichdim)
-  if (!is.null(mydc)) {
-    for (i in whichdim) {mydc[[i]] = MDcountrycode:::.fixcountrycode(mydc[[i]],tocode = tocode,cols2fix = 'code'); rownames(mydc[[i]])=mydc[[i]][[1]]}
-    attr(y,'dcstruct') =mydc
-  }
+    if (is.numeric(whichdim)) whichdim=colnames(x)[whichdim]
 
+    if (!is.null(mydc)) {
 
-  if (MD3:::.md3_is(inmd3ordt))  y=MD3:::.md3_class(y)
-  return(y)
+      for (i in whichdim) {
+        mydic=MDcountrycode:::.fixcountrycode(mydc[[i]],tocode = tocode,cols2fix = 'code')
+        if (NCOL(mydic)>1) { myvec=mydic[,1,drop=TRUE]} else {myvec=mydic}
+        if (anyDuplicated(myvec)) {
+          warning('Not converting country codes due to duplicates relating to ', utils::head(myvec[duplicated(myvec)],1),', etc')
+          next;
+        }
+        rownames(mydic)=myvec
+        mydc[[i]] = mydic;
+      }
+    }
+    y=MDcountrycode:::.fixcountrycode(x,tocode = tocode,cols2fix = whichdim)
+    if (!is.null(mydc)) {attr(y,'dcstruct') =mydc}
+    if (MD3:::.md3_is(inmd3ordt))  y=MD3:::.md3_class(y)
+    return(y)
 }
-
-
-
 
 
 #https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/dataflow/ESTAT/namq_10_gdp/latest?detail=referencepartial&references=descendants

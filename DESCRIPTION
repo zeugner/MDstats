@@ -1,7 +1,7 @@
 Package: MDstats
 Type: Package
 Title: What the Package Does (Title Case)
-Version: 0.1.0
+Version: 0.1.1
 Author: Who wrote it
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: More about what it does (maybe more than one line)
@@ -19,5 +19,6 @@ Collate:
     'estat.R'
     'imfweo.R'
     'rsdmxutilities.R'
+    'useexternally.R'
 Depends: 
     R (>= 2.10)

@@ -9,6 +9,7 @@
 #'
 #'
 #' This package is still under development; there are certainly some bugs lurking around
+#' Build date: 2024-01-09
 #'
 #'
 #' Conversion to and from \code{data.table}, tibble, and \code{pdata.frame} is to be added
@@ -40,4 +41,4 @@ NULL
 #}
 
 
-require(data.table);  require(MDcountrycode); require(MD3)
+require(data.table);  require(MDcountrycode); suppressWarnings(require(MD3,quietly = TRUE))
