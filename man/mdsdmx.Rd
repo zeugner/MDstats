@@ -17,7 +17,7 @@ mdSdmx(
 )
 }
 \arguments{
-\item{code}{a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See \code{\linnk{mds}} for an example}
+\item{code}{a character query string with a RestFul SDMX query (such as ECB/EXR/A.GBP+CHF.EUR.SP00.A). See \code{\link{mds}} for an example}
 
 \item{startPeriod}{optional, character, integer, timo or date-like class. default empty string means to fetch data including  the first available period}
 

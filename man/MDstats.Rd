@@ -16,6 +16,7 @@ Use function \code{mds} and function \code{helpmds} to access all
 
 
 This package is still under development; there are certainly some bugs lurking around
+Build date: 2024-01-09
 
 
 Conversion to and from \code{data.table}, tibble, and \code{pdata.frame} is to be added

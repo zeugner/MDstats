@@ -2,6 +2,7 @@
 
 export(DTstat)
 export(helpmds)
+export(loadExternally)
 export(mdAmeco)
 export(mdSdmx)
 export(mdWEO)
