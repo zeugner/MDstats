@@ -1,4 +1,4 @@
-#' MDstats: A package providing for loading rom SDMX and other macro data sources for multi-dimensional data manipulation
+#' MDstats: A package providing for loading from SDMX and other macro data sources for multi-dimensional data manipulation
 #'
 #'
 #'

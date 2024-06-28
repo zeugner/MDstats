@@ -19,12 +19,19 @@
 
   if (year<2006 | (year==2006 & release==1)) stop("no data available")
   if (!(release %in% 0:2)) stop("wrong release number")
-  weourl=paste("http://www.imf.org/external/pubs/ft/weo/",year,"/0",release,"/weodata/WEO",ifelse(release==1,"Apr","Oct"),year,"all",ifelse(ctrygroups,"a",""),".xls",sep="")
-  if (year==2011) weourl=sub("WEOOct","WEOSep",weourl)
-  if (year==2006) weourl=sub("weodata/WEOOct","data/WEOSep",weourl)
-  if (year > 2006) {
+  temp=readLines(paste("https://www.imf.org/en/Publications/WEO/weo-database/",year,"/",ifelse(release==1,"April","October"),"/download-entire-database",sep=""),warn = FALSE)
+
+  temp=temp[c(grep('By Countries',temp)[1],grep('By Country Groups',temp)[1])]
+  temp=gsub('">.*$','',gsub('^.*href="','',temp[1]))
+  weourl=paste("http://www.imf.org/",temp[1+countrygrouops])
+  #weourl=paste("http://www.imf.org/external/pubs/ft/weo/",year,"/0",release,"/weodata/WEO",ifelse(release==1,"Apr","Oct"),year,"all",ifelse(ctrygroups,"a",""),".xls",sep="")
+  #if (year==2011) weourl=sub("WEOOct","WEOSep",weourl)
+  if (year==2011) weourl=sub("October","September",weourl)
+  #if (year==2006) weourl=sub("weodata/WEOOct","data/WEOSep",weourl)
+  if (year < 2006) {
     #weourl = paste0("https://www.imf.org/~/media/Files/Publications/WEO/WEO-Database/",year,"/0",release,"/WEO",ifelse(release==1,"Apr","Oct"),year,"all",ifelse(ctrygroups,"a",""),".ashx")
-    weourl = paste0("https://www.imf.org/~/media/Files/Publications/WEO/WEO-Database/",year,"/WEO",ifelse(release==1,"Apr","Oct"),year,"all",ifelse(ctrygroups,"a",""),".ashx")
+    #weourl = paste0("https://www.imf.org/~/media/Files/Publications/WEO/WEO-Database/",year,"/WEO",ifelse(release==1,"Apr","Oct"),year,"all",ifelse(ctrygroups,"a",""),".ashx")
+    stop('WEO Year ',year,' not available via this function')
   }
 
   datasetcode = paste0('mdWEO_',year,'_',release,ifelse(ctrygroups,'_agg',''))

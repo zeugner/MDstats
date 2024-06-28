@@ -1,12 +1,11 @@
 Package: MDstats
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Economic statistics loader using SDMX and other sources 
 Version: 0.1.1
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Stefan Zeugner
+Maintainer: Stefan Zeugner <stefan.zeugner@ec.europa.eu>
+Description: A package providing for loading from SDMX and other macro data sources for multi-dimensional data manipulation
+License: LGPL
 Encoding: UTF-8
 LazyData: false
 StagedInstall: no
