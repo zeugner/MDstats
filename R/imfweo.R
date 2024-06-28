@@ -23,7 +23,7 @@
 
   temp=temp[c(grep('By Countries',temp)[1],grep('By Country Groups',temp)[1])]
   temp=gsub('">.*$','',gsub('^.*href="','',temp[1]))
-  weourl=paste("http://www.imf.org/",temp[1+countrygrouops])
+  weourl=paste0("http://www.imf.org",temp[1+ctrygroups])
   #weourl=paste("http://www.imf.org/external/pubs/ft/weo/",year,"/0",release,"/weodata/WEO",ifelse(release==1,"Apr","Oct"),year,"all",ifelse(ctrygroups,"a",""),".xls",sep="")
   #if (year==2011) weourl=sub("WEOOct","WEOSep",weourl)
   if (year==2011) weourl=sub("October","September",weourl)
