@@ -2,9 +2,9 @@
 % Please edit documentation in R/MDstats.R
 \name{MDstats}
 \alias{MDstats}
-\title{MDstats: A package providing for loading rom SDMX and other macro data sources for multi-dimensional data manipulation}
+\title{MDstats: A package providing for loading from SDMX and other macro data sources for multi-dimensional data manipulation}
 \description{
-MDstats: A package providing for loading rom SDMX and other macro data sources for multi-dimensional data manipulation
+MDstats: A package providing for loading from SDMX and other macro data sources for multi-dimensional data manipulation
 }
 \section{MDstats functionality}{
 
@@ -16,7 +16,7 @@ Use function \code{mds} and function \code{helpmds} to access all
 
 
 This package is still under development; there are certainly some bugs lurking around
-Build date: 2024-01-11
+Build date: 2024-06-24
 
 
 Conversion to and from \code{data.table}, tibble, and \code{pdata.frame} is to be added
