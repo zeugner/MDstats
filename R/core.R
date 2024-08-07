@@ -25,7 +25,7 @@
   names(surls)=sproviders
   sproviders = sproviders[!duplicated(sproviders)]
 
-  surls['OECD'] = gsub('/data/','/GetData/',surls['OECD'])
+  #surls['OECD'] = gsub('/data/','/GetData/',surls['OECD'])
   ssuffix=character(length(surls)); names(ssuffix)=names(surls)
 
 
@@ -581,9 +581,10 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 #ii[.y2023m07,as='numeric']
 #as.numeric(ii[.y2023m07]/ii[.y2022m07]-1)
 .fetchdnwcodelist = function(mycode,verbose=FALSE) {
-  vq=.fixSdmxCode(mycode)
+  vq=suppressWarnings(.fixSdmxCode(mycode))
   dfmeta=rsdmx::readSDMX(providerId=vq[1],resource='dataflow',resourceId = vq[2],verbose = verbose)
   if (any('dataflows' %in% slotNames(dfmeta))) rid=dfmeta@dataflows[[1]]@dsdRef else rid =vq[2]
+  if (toupper(vq[1])=='OECD') rid=vq[2]
   dfdsd=rsdmx::readSDMX(gsub('references=children','references=none',.rsdmxurl(vq[1],resource='datastructure',resourceId = rid)),verbose=verbose)
   if (isS4(dfdsd@datastructures)) { dfdsd=dfdsd@datastructures}
   possdn=unlist(lapply(dfdsd@datastructures[[1]]@Components@Dimensions, function(x) {yy=x@codelist; names(yy)=x@conceptRef; yy}))

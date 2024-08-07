@@ -113,6 +113,8 @@
   }
 
 
+  oProvs@providers[[which(idProvs=='OECD')]]@builder@handler$dataflow           = function (obj) { if (is.null(obj@resourceId)) obj@resourceId = "ALL"; req <- sprintf("%s/dataflow/%s/", obj@regUrl, gsub(',','/',obj@resourceId)); return(req) }
+  oProvs@providers[[which(idProvs=='OECD')]]@builder@handler$datastructure      = function (obj) { if (is.null(obj@resourceId)) obj@resourceId = "ALL"; req <- sprintf("%s/dataflow/%s/?references=descendants&format=structure&detail=referencepartial", obj@regUrl, gsub(',','/',obj@resourceId)); return(req) }
 
   oProvs@providers[[which(idProvs=='ISTAT')]]@builder@handler$datastructure = function (obj)
   {
@@ -171,7 +173,7 @@ providertable=NULL
   tryit=try(.rsdmxfixer(.dprovs),silent=TRUE)
   if (is(tryit,'try-error')) {message('Fixing the rsdmx package did not work out, which impairs access to some SDMX sourves, notably IMF.\nTry to run library(MDstats) again')}
 
-
+  assign('.mdstats_providers', .mdstats_providerscreate(providertable), envir = topenv())
 }
 
 if (!exists('.mdstats_providers')) .mdstats_providers = .mdstats_providerscreate(providertable)
