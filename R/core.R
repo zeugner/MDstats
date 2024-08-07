@@ -581,7 +581,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 #ii[.y2023m07,as='numeric']
 #as.numeric(ii[.y2023m07]/ii[.y2022m07]-1)
 .fetchdnwcodelist = function(mycode,verbose=FALSE) {
-  vq=.fixSdmxCode(mycode)
+  vq=suppressWarnings(.fixSdmxCode(mycode))
   dfmeta=rsdmx::readSDMX(providerId=vq[1],resource='dataflow',resourceId = vq[2],verbose = verbose)
   if (any('dataflows' %in% slotNames(dfmeta))) rid=dfmeta@dataflows[[1]]@dsdRef else rid =vq[2]
   dfdsd=rsdmx::readSDMX(gsub('references=children','references=none',.rsdmxurl(vq[1],resource='datastructure',resourceId = rid)),verbose=verbose)

@@ -113,6 +113,8 @@
   }
 
 
+  oProvs@providers[[which(idProvs=='OECD')]]@builder@handler$dataflow      = function (obj) { if (is.null(obj@resourceId)) obj@resourceId = "ALL"; req <- sprintf("%s/dataflow/%s/", obj@regUrl, gsub(',','/',obj@resourceId)); if (!is.null(accessKey)) { if (!is.null(obj@accessKey)) { if (length(grep("\\?", req)) == 0)  req <- paste0(req, "?"); req <- paste(req, sprintf("%s=%s", accessKey, obj@accessKey), sep = "&") }}; return(req) }
+
 
   oProvs@providers[[which(idProvs=='ISTAT')]]@builder@handler$datastructure = function (obj)
   {
