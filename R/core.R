@@ -291,7 +291,7 @@
 
 
 #xx=.stackedsdmx("ECB/EXR/A.JPY+PLN.EUR.SP00.A",justxml = TRUE); ii=.sdmxasmd3("ECB/EXR/A.JPY+PLN.EUR.SP00.A")
-#ii=.sdmxasmd3("OECD/TIVA_2021_C1/FFD_DVA.WLD+AUT+BEL.WLD+AUT+BEL.DTOTAL");  ii=.sdmxasmd3("OECD/EA/AUT.GDP.Q")
+#ii=.sdmxasmd3("OECD/OECD.ECO.MAD,DSD_EO@DF_EO,1.1/AUT+EST.ITISKV+GDPV_ANNPCT.A");  ii=.sdmxasmd3("OECD/EA/AUT.GDP.Q")
 #ii=.sdmxasmd3('BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL')
 #ii=.sdmxasmd3("BIS/WS_EER_M/M.N.B.AT+FR+BE")
 #ii=.sdmxasmd3('ESTAT/prc_hpi_q/Q..I10_Q.AT+BE')
@@ -384,7 +384,7 @@
   if (grepl('\\.',mycode)) {
     if (nchar(gsub('[^/]','',mycode))!=2) {
       if (toupper(gsub('/.*$','',mycode))!='OECD') warning('The query ',mycode, ' contains dots but not two slashes in the right place') #!?! OECD conditto be reviewed later
-    on }
+    }
   }
   sprov=gsub('/.*$','',mycode)
 
@@ -491,7 +491,7 @@ mdSdmx = function(code, startPeriod='',endPeriod='', drop=TRUE, labels=FALSE,
 #' dimcodes(o1)
 #'
 #'
-#' mds("OECD/EO/AUT+FRA.GDP.Q")
+#' mds("OECD/OECD.ECO.MAD,DSD_EO@DF_EO/AUT+FRA.GDP.Q")
 #' foo=mds("ESTAT/prc_hpi_q/Q..I15_Q.")
 #'
 #' foo[AT:BG.TOTAL.y2020:y]
