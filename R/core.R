@@ -74,7 +74,11 @@
     if (!NROW(ldf[[sprovider]])) {
       message('loading dataflows from ',sprovider, ', this might take some time')
       ldf[[sprovider]] <<- .fetchDataflows(sprovider,verbose=verbose)
+<<<<<<< HEAD
       if (sprovider=='OECD') { ldf[[sprovider]][[1]]=paste0(ldf[[sprovider]][['agencyid']],',',ldf[[sprovider]][['id']])} #to be reviewed !?!
+=======
+      if (sprovider=='OECD') { ldf[[sprovider]][[1]]=paste0(ldf[[sprovider]][['id']],',',ldf[[sprovider]][['agencyid']])} #to be reviewed !?!
+>>>>>>> 53105642f655d595b59e72b796f7fc2885787aa0
     }
     ldf[[sprovider]]
   }
