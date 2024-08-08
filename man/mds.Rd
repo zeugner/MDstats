@@ -75,7 +75,7 @@ o1=mds("ECB/EXR/A.GBP+JPY+USD.EUR.SP00.A",labels=TRUE)
 dimcodes(o1)
 
 
-mds("OECD/EO/AUT+FRA.GDP.Q")
+mds("OECD/OECD.ECO.MAD,DSD_EO@DF_EO/AUT+FRA.GDP.Q")
 foo=mds("ESTAT/prc_hpi_q/Q..I15_Q.")
 
 foo[AT:BG.TOTAL.y2020:y]

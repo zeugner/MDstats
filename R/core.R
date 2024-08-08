@@ -236,25 +236,30 @@
 }
 
 .sdmxasmd3 = function(mycode,drop=TRUE,metadata=FALSE,verbose=FALSE, ccode=NULL, startPeriod='', endPeriod='') {
-  mycode=.fixSdmxCode(mycode,asvector = FALSE)
+
   #dfmeta=rsdmx::readSDMX(providerId=.fixSdmxCode(mycode)[1],resource='dataflow',resourceId = .fixSdmxCode(mycode)[2],verbose=verbose)
   #if ('dataflows' %in% slotNames(dfmeta)) mydsdref=dfmeta@dataflows[[1]]@dsdRef else mydsdref= dfmeta@datastructures@datastructures[[1]]@id
-  if (metadata) {
-   #possdn=.mdstats_providers$dsddc(.fixSdmxCode(mycode)[1],dfmeta@dataflows[[1]]@dsdRef)
-    #possdn=.fetchfullcodelists(mycode,verbose=verbose,sdmxdataflow=dfmeta)
-    possdn=.fetchfullcodelists(mycode,verbose=verbose)
+
+
+  if (any(grepl('^https*:/',trimws(mycode)))) {
+    mxml <- try(rsdmx::readSDMX(trimws(mycode),verbose = verbose),silent=TRUE)
+    if (is(mxml,'try-error')) stop('Could not fetch data for URL ',mycode,'.\n')
+    mout=.xml2md3(mxml)
   } else {
+    mycode=.fixSdmxCode(mycode,asvector = FALSE)
+    if (metadata) {
+      #possdn=.mdstats_providers$dsddc(.fixSdmxCode(mycode)[1],dfmeta@dataflows[[1]]@dsdRef)
+      #possdn=.fetchfullcodelists(mycode,verbose=verbose,sdmxdataflow=dfmeta)
+      possdn=.fetchfullcodelists(mycode,verbose=verbose)
+    } else {
+      possdn = .mdstats_providers$dfdims(.fixSdmxCode(mycode)[[1]],.fixSdmxCode(mycode)[[2]],verbose)
+    }
 
-
-    #dfdsd=rsdmx::readSDMX(gsub('references=children','references=none',.rsdmxurl(.fixSdmxCode(mycode)[1],resource='datastructure',resourceId = mydsdref)))
-    #if (isS4(dfdsd@datastructures)) { dfdsd=dfdsd@datastructures}
-    #possdn=unlist(lapply(dfdsd@datastructures[[1]]@Components@Dimensions, function(x) {yy=x@codelist; names(yy)=x@conceptRef; yy}))
-
-    possdn = .mdstats_providers$dfdims(.fixSdmxCode(mycode)[[1]],.fixSdmxCode(mycode)[[2]],verbose)
+    mxml=.stackedsdmx(mycode,justxml=TRUE,verbose=verbose,startPeriod = startPeriod,endPeriod = endPeriod)
+    mout=.xml2md3(mxml,mycode,names(possdn))
   }
 
-  mxml=.stackedsdmx(mycode,justxml=TRUE,verbose=verbose,startPeriod = startPeriod,endPeriod = endPeriod)
-  mout=.xml2md3(mxml,mycode,names(possdn))
+
   if (metadata) {
 
 
@@ -512,6 +517,13 @@ mds = function(code, startPeriod='', endPeriod='', drop=TRUE, labels=FALSE,
   if (is.numeric(endPeriod)) { if (endPeriod<1) {endPeriod=''} else { endPeriod=as.character(endPeriod)}}
 
   if (missing(code)) return(helpmds())
+
+  if (any(grepl('^https*:/',tolower(code)))) {
+    mout=.sdmxasmd3(code,startPeriod=startPeriod, endPeriod=endPeriod, drop=drop,metadata=labels,verbose=verbose)
+    return(MD3:::.getas(mout,as))
+  }
+
+
   ixprov=match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$table()[[1]],nomatch=0)
   if (ixprov>0) {
     provtype=.mdstats_providers$table()[['PrimType']][ixprov]; if (is.na(provtype)) provtype=''
@@ -520,13 +532,16 @@ mds = function(code, startPeriod='', endPeriod='', drop=TRUE, labels=FALSE,
 
     }
     mout=.sdmxasmd3(code,startPeriod=startPeriod, endPeriod=endPeriod, drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
-    return(MD3:::.getas(mout,as))
+
   } else {
-    if (any(grepl('nomics',tolower('code')))) {stop('DBnomics not available via this route. Try function Nomics, or helpNomics()')}
-    if (any(grepl('fred',tolower('code')))) {stop('FRED of the St. Louis Fed is yet not available. Keep a watch on this package though, it is the next in line')}
-    stop('Provider not available')
+
+      if (any(grepl('nomics',tolower('code')))) {stop('DBnomics not available via this route. Try function Nomics, or helpNomics()')}
+      if (any(grepl('fred',tolower('code')))) {stop('FRED of the St. Louis Fed is yet not available. Keep a watch on this package though, it is the next in line')}
+      stop('Provider not available')
+
   }
 
+  return(MD3:::.getas(mout,as))
 }
 
 
