@@ -734,6 +734,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
   #mydims=try(.fetchdnwcodelist(query),silent=TRUE)
   dfmeta=rsdmx::readSDMX(providerId=vq[1],resource='dataflow',resourceId = vq[2],verbose = FALSE)
   if (any('dataflows' %in% slotNames(dfmeta))) rid=dfmeta@dataflows[[1]]@dsdRef else rid =vq[2]
+  if (toupper(vq[1])=='OECD') rid=vq[2]
   dfdsd=rsdmx::readSDMX(gsub('references=children','references=none',.rsdmxurl(vq[1],resource='datastructure',resourceId = rid)),verbose=verbose)
 
   if (length(dim)) {
