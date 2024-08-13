@@ -151,7 +151,7 @@
   if (justurl) return(myurl)
   if (verbose) cat('\nreading from ',myurl,' ...\n')
   ressdmx <- try(rsdmx::readSDMX(myurl,verbose = verbose),silent=TRUE)
-  if (is(ressdmx,'try-error')) stop('Could not fetch data for query code ',mycode,'.\nTry running helpmds("',mycode,") to find out why.\n")
+  if (is(ressdmx,'try-error')) stop('Could not fetch data for query code ',mycode,'.\nTry running helpmds("',mycode,'") to find out why.\n')
   if (!length(ressdmx)) { stop('The web request to ',myurl, ' returned NULL, perhaps for latency resons. Please try again.' ) }
   if (justxml) return(ressdmx)
   if (class(ressdmx)=='SDMXCompactData') {
@@ -684,12 +684,12 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 
     if (NROW(mydf)>50) {
       cat(capture.output(print(mydf[sample(NROW(mydf),50),])),sep='\n')
-      cat('plus ',NROW(mydf)-50, ' more.')
+      cat('plus ',NROW(mydf)-50, ' more.\n',sep='')
     } else {
 
       cat(capture.output(print(head(mydf,50))),sep='\n')
     }
-    cat('Run helpmds("',vq[1],', pattern="YOUREXPRESSION") to search for specific terms\n',sep = '')
+    cat('Run helpmds("',vq[1],'", pattern="YOUREXPRESSION") to search for specific terms\n',sep = '')
     cat('Run xx=helpmds("',vq[1],'") to load the list of dataflows into variable xx\n',sep='')
     return(invisible(mydf))
 
