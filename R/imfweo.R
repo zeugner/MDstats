@@ -83,7 +83,7 @@
 
   ctries=jj[,'Country']; names(ctries) = trimws(jj[,'ISO']); ctries=na.omit(ctries[!duplicated(ctries)]);
   attr(ctries,'na.action')=NULL; ctries=ctries[!is.na(names(ctries))]
-  subj=paste0(jj[,"Subject Descriptor"],', ',"Units")
+  subj=paste0(jj[,"Subject Descriptor"],', ',jj[,"Units"])
   names(subj)=trimws(jj[,"WEO Subject Code"])
   subj=na.omit(subj[!duplicated(subj)]); attr(subj,'na.action')=NULL; subj=subj[!is.na(names(subj))]
   ddd=data.table(jj[,c(grep('^ISO$',names(jj)),grep('Subject.*ode',names(jj)),grep('^[0-9]*$',names(jj)))])
@@ -153,7 +153,7 @@ mdWEO = function(code=NULL,year=0,release=0,
   if (nchar(gsub('[^\\.]','',code))==1) code=paste0(code,'.')
 
   mout=MD3:::.md3get(tempweo,code,drop = drop)
-  if (length(ccode)) { mout=.countrycodefixer(mout,NULL,'COUNTRY',ccode)}
+  if (length(ccode)) if ('COUNTRY' %in% names(dimnames(mout))) { mout=.countrycodefixer(mout,NULL,'COUNTRY',ccode)}
   MD3:::.getas(mout,as)
 }
 
@@ -190,7 +190,7 @@ mdWEO = function(code=NULL,year=0,release=0,
       cat(capture.output(print(head(odn,50))),sep='\n')
       if (NROW(odn)>50) cat('\nand ',NROW(odn)-50,'more ')
 
-      cat('\nRun e.g. helpmdWEO("", dim="',dim,'", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension ',dim,sep='')
+      cat('\nRun e.g. helpmdWEO("", dim="',dim,'", pattern="MYSEARCHTERM") resp helpmds("IMFWEO/WEO/", dim="',dim,'", pattern="MYSEARCHTERM") to search the codes and descriptions for dimension ',dim,sep='')
       cat('\nRun e.g. xx=helpmdWEO(dim="',dim,'") to load all codes and descriptions for dimension ',dim,' into variable xx\n',sep='')
 
       return(invisible(odn))
