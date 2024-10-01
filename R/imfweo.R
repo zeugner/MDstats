@@ -83,7 +83,8 @@
 
   ctries=jj[,'Country']; names(ctries) = trimws(jj[,'ISO']); ctries=na.omit(ctries[!duplicated(ctries)]);
   attr(ctries,'na.action')=NULL; ctries=ctries[!is.na(names(ctries))]
-  subj=paste0(jj[,"Subject Descriptor"],', ',jj[,"Units"])
+  #subj=paste0(jj[,"Subject Descriptor"],', ',jj[,"Units"])
+  subj=apply(jj[,c("Subject Descriptor","Units","Scale")],1,paste,collapse=', ')
   names(subj)=trimws(jj[,"WEO Subject Code"])
   subj=na.omit(subj[!duplicated(subj)]); attr(subj,'na.action')=NULL; subj=subj[!is.na(names(subj))]
   ddd=data.table(jj[,c(grep('^ISO$',names(jj)),grep('Subject.*ode',names(jj)),grep('^[0-9]*$',names(jj)))])
@@ -145,15 +146,16 @@ mdWEO = function(code=NULL,year=0,release=0,
   }
   if (nchar(gsub('[^\\.]','',code))>2) stop('Could not interpret query code',code)
 
-  temp=strsplit(code,split='\\.')[[1L]];
+  temp=trimws(strsplit(paste0(' ',code, ' '),split='\\.')[[1L]]);
   if (any(grepl('\\+',temp[[1L]]))) {
     temp[[1L]]=paste(MDcountrycode::ccode(strsplit(temp[[1L]],split='\\+')[[1L]],c('iso2m','iso3c','iso2c'),'iso3c',leaveifNA = TRUE,warn = FALSE),collapse='+')
     code=paste(temp,collapse = '.')
   }
   if (nchar(gsub('[^\\.]','',code))==1) code=paste0(code,'.')
 
-  mout=MD3:::.md3get(tempweo,code,drop = drop)
-  if (length(ccode)) if ('COUNTRY' %in% names(dimnames(mout))) { mout=.countrycodefixer(mout,NULL,'COUNTRY',ccode)}
+  mout=MD3:::.md3get(tempweo,code,drop = FALSE)
+  if (length(ccode))  mout=.countrycodefixer(mout,NULL,'COUNTRY',ccode)
+  if (drop) {mout=MD3:::drop(mout)}
   MD3:::.getas(mout,as)
 }
 
