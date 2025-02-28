@@ -24,6 +24,6 @@ Conversion to and from \code{data.table}, tibble, and \code{pdata.frame} is to b
 
 \section{Author}{
 
-Stefan Zeugner ECFIN.B1
+Stefan Zeugner
 }
 

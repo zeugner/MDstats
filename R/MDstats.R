@@ -15,8 +15,9 @@
 #' Conversion to and from \code{data.table}, tibble, and \code{pdata.frame} is to be added
 #'
 #' @section Author:
-#' Stefan Zeugner ECFIN.B1
+#' Stefan Zeugner
 #
+#' @import data.table
 #' @import utils
 #' @import bit64
 #' @import XML
@@ -41,4 +42,4 @@ NULL
 #}
 
 
-require(data.table);  require(MDcountrycode); suppressWarnings(require(MD3,quietly = TRUE))
+require(data.table);  require(MDcountrycode); suppressMessages(require(MD3,quietly = TRUE))

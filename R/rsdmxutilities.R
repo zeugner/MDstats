@@ -56,6 +56,33 @@
     return(req)
   }
 
+  oProvs@providers[[which(idProvs=='ECB')]]@builder@handler$dataflow =  function (obj)   {
+
+    if (is.null(obj@resourceId))
+      obj@resourceId = "all"
+
+    req <- sprintf("%s/dataflow/%s/%s/%s", obj@regUrl, 'all',
+                   obj@resourceId, 'latest')
+
+    return(req)
+  }
+
+
+  oProvs@providers[[which(idProvs=='ECB')]]@builder@handler$datastructure =  function (obj)   {
+    if (is.null(obj@agencyId)) obj@agencyId = "all"
+    if (is.null(obj@resourceId)) obj@resourceId = "all"
+    if (is.null(obj@version)) obj@version = "latest"
+    req <- sprintf("%s/datastructure/%s/%s/%s", obj@regUrl,
+                   obj@agencyId, obj@resourceId, obj@version)
+    req <- paste0(req, "?references=children")
+    return(req)
+  }
+
+
+
+
+ # "https://data-api.ecb.europa.eu/service/dataflow/all/EXR/latest
+
   oProvs@providers[[which(idProvs=='IMF')]]@builder@handler$datastructure =  function (obj) {
 
     if (is.null(obj@resourceId))

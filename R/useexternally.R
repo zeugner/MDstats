@@ -33,7 +33,7 @@
   #Everything until --no-save denotes the call to R. Eveything after that are the 1 to 3 arguments
   #Argument 1 (mandatory): code to be loaded via mds, like ESTAT/prc_hpi_a/A.TOTAL..BE. Can be prefixed with nomics:, ameco: or imfweo: to acess specfic functions other than mds
   #Argument 2 (optional): Boolean whether to 1 (default): make the final file a country panel, with geo and time dimensions in the first column
-  #   and all other dimensions forming separate variables. Or 0:make the result fully stacked, with n identifieer columns and one obs_value column
+  #   and all other dimensions forming separate variables. Or 0: make the result fully stacked, with n identifieer columns and one obs_value column
   #Argument 3 (optional): the filepath where to save the result. Must be either .csv or .dta (Stata) file. Default is defaultoutpath
  "
 
@@ -88,22 +88,22 @@
 #' Function and script to make mds callable form other applications, such as Stata
 #'
 #' This function is meant to be called from other applications via RScript and arguments. If you don't know R, look below under the section Stata Users resp Non-Stata Users
-#' @param \dots either a character call (such as "ECB/EXR/A.JPY.EUR.SP00.A") to mds or a related function , or a list containing that call, aswell as outpath and ascountrypanel
-#' @param outpath Character. the dta or csv file to be created be the function (default C:/Users/Public/statautils/queryresult.dta). If empty, nullor empty string, then loadExternally simply returns the object on the R console
-#' @param ascountrypanel logical (Default TRUE). If TRUE, then this attempts to reshape the result into a panel form with "variables" being the columns, and caountries and TIME being identified in the first column. If FALSE, then teh result is fully stacked, and contains observation attributes.
+#' @param \dots either a character call (such as "ECB/EXR/A.JPY.EUR.SP00.A") to mds or a related function , or a list containing that call, as well as outpath and ascountrypanel
+#' @param outpath Character. the dta or csv file to be created be the function (default C:/Users/Public/statautils/queryresult.dta). If empty, NULL, or empty string, then loadExternally simply returns the object on the R console
+#' @param ascountrypanel logical (Default TRUE). If TRUE, then this attempts to reshape the result into a panel form with "variables" being the columns, and countries and TIME being identified in the first column. If \code{FALSE}, then the result is fully stacked, and contains observation attributes.
 #' @return the file path to outpath, or a data.table (if outpath=='')
 #' @details if left empty, then this function creates the script loadMD.R to be called with R script.
 #' The default path for that script is C:/Users/Public/statautils/loadMD.R but than be changed using outpath.
 #' (In the latter case like \code{loadExternally(outpath='c:/balbal.R')} can also be used in non-interactive mode)
 #'
 #' this also creates the wrapper file loadMD.cmd which is easier to handle than using loadMD.R directly
-#' You can call it by \code{C:/Users/Public/statutils/loadMD Arg1 Arg2 Arg3}  where the first Argumetn \code{Arg1} is mandatory.
+#' You can call it by \code{C:/Users/Public/statutils/loadMD Arg1 Arg2 Arg3}. The first Argument \code{Arg1} is mandatory, whereas  \code{Arg2}  and  \code{Arg3} are optional
 #'
 #' loadMD accepts the following arguments
 #' \itemize{
 #' \item{Arg1}{ (mandatory): code to be loaded via mds, like ESTAT/prc_hpi_a/A.TOTAL..BE. Can be prefixed with \code{nomics:}, \code{ameco:} or \code{imfweo}: to access specific functions other than \code{mds}}
 #' \item{Arg2}{ (optional): 1 or 0.  Setting this to 1 (default) makes the final file a country panel, with geo and time dimensions in the first column
-#'   and all other dimensions forming separate variables. Or 0:make the result fully stacked, with n identifier columns and one obs_value column}
+#'   and all other dimensions forming separate variables. Or 0:make the result fully stacked, with n identifier columns and one \code{obs_value} column}
 #' \item{Arg3}{  (optional): the filepath where to save the result. Must be either .csv or .dta (Stata) file. Default is the \code{defaultoutpath} variable defined in loadMD.R}
 #' }
 #'
@@ -115,7 +115,7 @@
 #'  \itemize{
 #'   \item{1)}{ make sure you have internet connection from R. Run e.g. \code{readLines('https://example.com',n = 1)} to check that}
 #'   \item{2)}{ make sure you have readstata13 installed. if \code{library(readstata13)} does not work, call \code{install.packages('readstata13')}}
-#'   \item{3)}{ run\code{loadExternally()}. Press Enter, and then type \code{a} and Enter}
+#'   \item{3)}{ run \code{loadExternally()}. Press Enter, and then type \code{s} and Enter}
 #'  }
 #'
 #'  Now from Stata, type e.g.
@@ -124,7 +124,7 @@
 #'
 #'  \code{use "C:\\Users\\Public\\statautils\\queryresult.dta", clear}
 #'
-#'  or
+#'  or use the second argument to load this  in 'fully stacked' form rather than as a country panel:
 #'
 #'  \code{shell "C:\\Users\\Public\\statautils\\loadmd" AMECO/C/BE+AT.1_0_0_0_UVGD 0}
 #'
@@ -236,7 +236,7 @@ loadExternally = function(...,outpath='C:/Users/Public/statautils/queryresult.dt
       dout=result
       names(dout)[grep('obs_value',names(dout))] = query
     } else {
-      dout=data.table::dcast(unflag(result,asDT=TRUE),sreshp,value.var=colnames(result)[grep('obs_value',colnames(result))])
+      dout=data.table::dcast(unflag(result,asDT=TRUE, ignoreNA = TRUE),sreshp,value.var=colnames(result)[grep('obs_value',colnames(result))])
       emptycols=apply(dout,2,function(x) all(is.na(x)))
       if (any(emptycols)) dout=dout[,!emptycols,with=FALSE]
     }
