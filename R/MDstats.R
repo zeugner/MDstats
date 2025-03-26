@@ -43,3 +43,12 @@ NULL
 
 
 require(data.table);  require(MDcountrycode); suppressMessages(require(MD3,quietly = TRUE))
+
+.onLoad = function (libname, pkgname) {
+  requiresilent=function(...) {
+    suppressWarnings(suppressMessages(suppressPackageStartupMessages(require(...))))
+  }
+
+  requiresilent(data.table);  requiresilent(MDcountrycode); requiresilent(MD3);
+  
+}
