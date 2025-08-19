@@ -193,16 +193,31 @@
 providertable=NULL
 
 .onLoad = function (libname, pkgname) {
-  require(rsdmx,quietly = TRUE);
+
+
+  requiresilent=function(...) {
+    loadres=suppressWarnings(suppressMessages(suppressPackageStartupMessages(require(...,quietly = TRUE))))
+    if (!loadres) {suppressPackageStartupMessages(require(...,quietly = FALSE))}
+    return(invisible(loadres))
+  }
+
+
+  requiresilent(data.table);  requiresilent(MDcountrycode); requiresilent(MD3); requiresilent(rsdmx);
+
+
+
 
   utils::data("providertable", package=pkgname, envir=parent.env(environment()))
   providertable<<-.dprovs
   tryit=try(.rsdmxfixer(.dprovs),silent=TRUE)
   if (is(tryit,'try-error')) {message('Fixing the rsdmx package did not work out, which impairs access to some SDMX sourves, notably IMF.\nTry to run library(MDstats) again')}
 
-  assign('.mdstats_providers', .mdstats_providerscreate(providertable), envir = topenv())
+  try(assign('.mdstats_providers', .mdstats_providerscreate(providertable), envir = topenv()),silent=TRUE)
 }
 
 if (!exists('.mdstats_providers')) .mdstats_providers = .mdstats_providerscreate(providertable)
 #providertable=tprovs
 #.mdstats_providers=.mdstats_providerscreate(providertable)
+
+
+

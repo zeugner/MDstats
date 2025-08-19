@@ -49,7 +49,13 @@
   }
   
   if (verbose) message('Working with a file size of ',round(file.size(ttt)/1e6,2), ' MB')
-  aaa=data.table::fread(ttt, drop=c('DATAFLOW', 'LAST UPDATE'),verbose = FALSE)
+  aaa=try(data.table::fread(ttt, drop=c('DATAFLOW', 'LAST UPDATE'),verbose = FALSE),silent=TRUE)
+  if (any(grepl('err',class(aaa)))) {
+    csvname=gsub('\\.csv.*$','.csv',ttt); 
+    if (!nchar(csvname)) stop('could not decompress ',ttt)
+    cat(readLines(gzfile(ttt)),file = csvname,sep='\n',append = FALSE)
+    aaa=data.table::fread(csvname, drop=c('DATAFLOW', 'LAST UPDATE'),verbose = FALSE)
+  }
   
   
   ix2lose= tolower(colnames(aaa)) %in% c('dataflow', 'last update','freq')

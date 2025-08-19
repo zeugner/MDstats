@@ -40,27 +40,7 @@ NULL
   # .rsdmxfixer()
 
 #}
-
-
-.onLoad = function (libname, pkgname) {
-  requiresilent=function(...) {
-   loadres=suppressWarnings(suppressMessages(suppressPackageStartupMessages(require(...,quietly = TRUE))))
-   if (!loadres) {suppressPackageStartupMessages(require(...,quietly = FALSE))}
-   return(invisible(loadres))
-  }
-
-  requiresilent(data.table);  requiresilent(MDcountrycode); requiresilent(MD3); requiresilent(MDstats)
-}
+#
 
 
 
-#require(data.table);  require(MDcountrycode); suppressMessages(require(MD3,quietly = TRUE))
-
-.onLoad = function (libname, pkgname) {
-  requiresilent=function(...) {
-    suppressWarnings(suppressMessages(suppressPackageStartupMessages(require(...))))
-  }
-
-  requiresilent(data.table);  requiresilent(MDcountrycode); requiresilent(MD3);
-
-}
