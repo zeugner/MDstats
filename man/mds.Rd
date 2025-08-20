@@ -12,7 +12,7 @@ mds(
   labels = FALSE,
   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",
     "data.frame"),
-  ccode = getOption("defaultcountrycode", "EC"),
+  ccode = getOption("defaultcountrycode", NULL),
   verbose = FALSE
 )
 }
@@ -83,10 +83,16 @@ foo[AT:BG.TOTAL.y2020:y]
 mds("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
 mds('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 
-mds("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
+mds("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 
 mds("AMECO/A/AT+FR+BE.1_0_0_0_UVGD", as='data.table')
 
+
+#note that for Estat, mds pivots to a faster download mode for entire dataflows (no series filters)
+#compare:
+a1=mds('ESTAT/prc_hpi_a/A...',verbose=TRUE)
+#to
+a2=mds('ESTAT/prc_hpi_a',verbose=TRUE)
 }
 \seealso{
 \code{\link{helpmds}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}

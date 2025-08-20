@@ -298,7 +298,7 @@
 #xx=.stackedsdmx("ECB/EXR/A.JPY+PLN.EUR.SP00.A",justxml = TRUE); ii=.sdmxasmd3("ECB/EXR/A.JPY+PLN.EUR.SP00.A")
 #ii=.sdmxasmd3("OECD/OECD.ECO.MAD,DSD_EO@DF_EO,1.1/AUT+EST.ITISKV+GDPV_ANNPCT.A");  ii=.sdmxasmd3("OECD/EA/AUT.GDP.Q")
 #ii=.sdmxasmd3('BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL')
-#ii=.sdmxasmd3("BIS/WS_EER_M/M.N.B.AT+FR+BE")
+#ii=.sdmxasmd3("BIS/WS_EER/M.N.B.AT+FR+BE")
 #ii=.sdmxasmd3('ESTAT/prc_hpi_q/Q..I10_Q.AT+BE')
 #ii=.sdmxasmd3('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 
@@ -433,15 +433,15 @@
 #' mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
 #' mdSdmx('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 #'
-#' mdSdmx("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
+#' mdSdmx("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 #' #is the same as
-#' mds("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
+#' mds("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 #'
 #' #but mds can also do providers that helpmds() marks with an asterisk, such as AMECO
 #' @export
 mdSdmx = function(code, startPeriod='',endPeriod='', drop=TRUE, labels=FALSE,
                   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
-                  ccode=getOption('defaultcountrycode','EC'), verbose=FALSE) {
+                  ccode=getOption('defaultcountrycode',NULL), verbose=FALSE) {
   if (missing(code)) return(helpmds())
   if (match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$table()[[1]],nomatch=0)) {
     mout=.sdmxasmd3(code,drop=drop,metadata=labels,verbose=verbose,ccode=ccode)
@@ -504,14 +504,20 @@ mdSdmx = function(code, startPeriod='',endPeriod='', drop=TRUE, labels=FALSE,
 #' mds("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
 #' mds('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 #'
-#' mds("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
+#' mds("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 #'
 #' mds("AMECO/A/AT+FR+BE.1_0_0_0_UVGD", as='data.table')
 #'
+#'
+#' #note that for Estat, mds pivots to a faster download mode for entire dataflows (no series filters)
+#' #compare:
+#' a1=mds('ESTAT/prc_hpi_a/A...',verbose=TRUE)
+#' #to
+#' a2=mds('ESTAT/prc_hpi_a',verbose=TRUE)
 #' @export
 mds = function(code, startPeriod='', endPeriod='', drop=TRUE, labels=FALSE,
                     as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
-                    ccode=getOption('defaultcountrycode','EC'),verbose=FALSE) {
+                    ccode=getOption('defaultcountrycode',NULL),verbose=FALSE) {
   if (!length(startPeriod)) {startPeriod=''}; if (!length(endPeriod)) {endPeriod=''}
   if (is.numeric(startPeriod)) { if (startPeriod<1) {startPeriod=''} else { startPeriod=as.character(startPeriod)}}
   if (is.numeric(endPeriod)) { if (endPeriod<1) {endPeriod=''} else { endPeriod=as.character(endPeriod)}}
@@ -526,8 +532,8 @@ mds = function(code, startPeriod='', endPeriod='', drop=TRUE, labels=FALSE,
 
   ixprov=match(.fixSdmxCode(code,asvector = TRUE)[1],.mdstats_providers$table()[[1]],nomatch=0)
   if (ixprov>0) {
-    provtype=.mdstats_providers$table()[['PrimType']][ixprov]; if (is.na(provtype)) provtype=''
-    if (provtype=='function') {
+    provtype=trimws(.mdstats_providers$table()[['DataProcessingFunction']][ixprov]); if (is.na(provtype)) provtype=''
+    if (nchar(provtype)) {
       return(get(.mdstats_providers$table()[['DataProcessingFunction']][ixprov])(code=code,startPeriod=startPeriod,endPeriod=endPeriod,drop=drop,labels=labels,as=as,ccode=ccode,verbose=verbose))
 
     }
@@ -697,17 +703,21 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 
 
   if (nchar(vq['Filter'])) {
-    testdf=try(rsdmx::readSDMX(paste0(.rsdmxurl(vq[1],'data',vq[2],keyaschar = vq[3]),'?detail=serieskeysonly')),silent=TRUE)
+    testdf=try(rsdmx::readSDMX(paste0(.rsdmxurl(vq[1],'data',vq[2],keyaschar = vq[3]),'?detail=serieskeysonly')),silent=TRUE) #fast way for Estat
+    temp=NULL
+    if (any(grepl('err',class(testdf)))) {
+      testdf=temp=try(mdSdmx(query,drop=FALSE,labels=TRUE,as='md3',verbose = FALSE), silent=TRUE) #brute way for most providers
+    }
     if (!any(grepl('err',class(testdf)))) {
       cat("The query ", query, " is fine and should return results\n...")
 
-      temp=mdSdmx(query,drop=FALSE,labels=TRUE,as='md3',verbose = verbose)
+      if (!length(temp)) temp=mdSdmx(query,drop=FALSE,labels=TRUE,as='md3',verbose = verbose)
       mydc=MD3:::.getdimcodes(temp)
       mydn=names(.fetchdnwcodelist(paste0(vq[[1]],'/',vq[[2]])))
       if (length(dim)) {
         if (is.character(dim)){ dim=mydn[match(tolower(dim),tolower(mydn))]} else {      dim=mydn[dim]}
         cat('It has the following elements in dimension "',dim,'":\n',sep='')
-        browser()
+
         if (is.na(match(dim,names(mydc)))) {
           mytbl=.fetchfullcodelists(paste0(vq[[1]],'/',vq[[2]]),verbose = verbose)[[dim]]
         } else {
@@ -719,11 +729,27 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 
 
       if ('TIME' %in% names(mydc)) { mydc=mydc[-match('TIME',names(mydc))]}
-      cat("It contains the following dimensions with more than one element: ")
-      for (i in which(unlist(lapply(mydc,NROW))>1)) {
-        cat('\nDimension ',names(mydc)[[i]],':\n')
-        cat(capture.output(mydc[[i]]), sep='\n')
+
+
+      ixsingletons=unlist(lapply(mydc,NROW)==1)
+      if (any(!ixsingletons)) {
+        cat("It contains the following dimensions with more than one element: ")
+
+        for (i in which(unlist(lapply(mydc,NROW))>1)) {
+          cat('\n*_ Dimension',names(mydc)[[i]],': _____\n')
+          cat(capture.output(mydc[[i]]), sep='\n')
+        }
       }
+
+      if (any(ixsingletons)) {
+        cat('\n__ Its singleton elements mean the following: ___')
+        for (i in which(ixsingletons)) {
+          cat('\n* Dimension "',names(mydc)[i],'", element "',mydc[[i]][,'code'],'": ', sep=''  )
+          cat(unname(unlist(mydc[[i]][,grep('label',colnames(mydc[[i]]))])),sep='; ')
+        }
+        cat('\n')
+      }
+
       return(invisible(mydc))
     }
     codeshere=strsplit((MD3:::.mdrest2codes(paste0(' ',vq[3],' '),10)),split='\\+')
@@ -901,15 +927,16 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
 #'
 #' foo=mds('BIS/WS_SPP/Q.FR.N.', labels=TRUE) #lets look for nominal quarterly house prices from France
 #' foo #hmm, what does 628 mean?
+#' helpmds('BIS/WS_SPP/Q.FR.N.') #one way to find out
 #'
-#' dimcodes(foo)[[1]] #one way to find out
+#' dimcodes(foo)[[1]] #another way - using dimcodes
 #'
 #' foo=helpmds('BIS/WS_SPP/Q.FR.N.') # another way to find out
 #' #note that foo now contains the dimcodes for that code
 #'
 #' helpmds('BIS/WS_SPP/Q.FR.N.', dim='UNIT_MEASURE') # another way to find out
 #'
-#' helpmds('BIS/WS_SPP',dim=4,pattern='628' ) \ another way to find out
+#' helpmds('BIS/WS_SPP',dim=4,pattern='628' ) # another way to find out
 #'
 #'
 #' #find out why another formulation does not work:

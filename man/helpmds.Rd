@@ -82,15 +82,16 @@ helpmds('BIS/WS_SPP',dim='FREQ') #all kinds of frequencies too that are permissi
 
 foo=mds('BIS/WS_SPP/Q.FR.N.', labels=TRUE) #lets look for nominal quarterly house prices from France
 foo #hmm, what does 628 mean?
+helpmds('BIS/WS_SPP/Q.FR.N.') #one way to find out
 
-dimcodes(foo)[[1]] #one way to find out
+dimcodes(foo)[[1]] #another way - using dimcodes
 
 foo=helpmds('BIS/WS_SPP/Q.FR.N.') # another way to find out
 #note that foo now contains the dimcodes for that code
 
 helpmds('BIS/WS_SPP/Q.FR.N.', dim='UNIT_MEASURE') # another way to find out
 
-helpmds('BIS/WS_SPP',dim=4,pattern='628' ) \ another way to find out
+helpmds('BIS/WS_SPP',dim=4,pattern='628' ) # another way to find out
 
 
 #find out why another formulation does not work:

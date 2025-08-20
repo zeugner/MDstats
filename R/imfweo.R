@@ -133,7 +133,7 @@
 #' @export
 mdWEO = function(code=NULL,year=0,release=0,
                   as=c("md3", "array", "numeric","data.table","zoo","2d","1d"),
-                  drop=TRUE,ccode=getOption('defaultcountrycode','EC'),startPeriod,endPeriod,...) {
+                  drop=TRUE,ccode=getOption('defaultcountrycode',NULL),startPeriod,endPeriod,...) {
   tempweo=.mdstats_providers$cachedmd3s(paste0('WEO',year,release))
   if (is.null(tempweo)) tempweo=.mdstats_providers$cachedmd3s(.parseWEO(year=year,release = release),paste0('WEO',year,release))
   if (is.character(code)) {

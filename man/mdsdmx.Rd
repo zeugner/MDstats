@@ -12,7 +12,7 @@ mdSdmx(
   labels = FALSE,
   as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",
     "data.frame"),
-  ccode = getOption("defaultcountrycode", "EC"),
+  ccode = getOption("defaultcountrycode", NULL),
   verbose = FALSE
 )
 }
@@ -50,9 +50,9 @@ foo[AT:BG.TOTAL.y2020:y]
 mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
 mdSdmx('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
 
-mdSdmx("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
+mdSdmx("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 #is the same as
-mds("BIS/WS_EER_M/M.N.B.AT+FR+BE",startPeriod=2021)
+mds("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 
 #but mds can also do providers that helpmds() marks with an asterisk, such as AMECO
 }

@@ -1,7 +1,7 @@
 Package: MDstats
 Type: Package
 Title: Economic statistics loader using SDMX and other sources 
-Version: 0.1.4
+Version: 0.1.5
 Author: Stefan Zeugner
 Maintainer: Stefan Zeugner <stefan.zeugner@ec.europa.eu>
 Description: A package providing for loading from SDMX and other macro data sources for multi-dimensional data manipulation
