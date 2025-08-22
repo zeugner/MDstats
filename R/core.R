@@ -219,6 +219,15 @@
 
   dmd3=dmd3[,c(dnames,onames),with=FALSE]
 
+  anydna=unlist(lapply(dmd3[,dnames,with=FALSE],anyNA))
+  if (length(anydna)) if (any(anydna)) {
+    warning('this SDMX source XML seems to contain identifiers that are NA')
+    for (i in which (anydna)) {
+      dmd3=dmd3[!is.na(dmd3[[i]]),]
+    }
+  }
+
+
   if (length(tname)) {
     fname=dnames[tolower(dnames) %in% c('freq','frq','frequency')][1]
     dmd3[['TIME']] = MD3::as.timo(dmd3[['TIME']],frq = dmd3[[fname]])
