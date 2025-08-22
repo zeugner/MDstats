@@ -126,7 +126,7 @@
 #'
 #' @export
 mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data.table","zoo","2d","1d"),
-                   drop=TRUE, ccode=getOption('defaultcountrycode',NULL), startPeriod=NULL, endPeriod=NULL,
+                   drop=TRUE, ccode=getOption('defaultcountrycode','EC'), startPeriod=NULL, endPeriod=NULL,
                    nbdim=3,inclaggreg=FALSE,verbose=TRUE,...) {
 
   if (is.character(startPeriod)) if (!nchar(startPeriod)) startPeriod=character()
