@@ -131,7 +131,7 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
 
   if (is.character(startPeriod)) if (!nchar(startPeriod)) startPeriod=character()
   if (is.character(endPeriod  )) if (!nchar(endPeriod  )) endPeriod  =character()
-
+  if (!length(ccode)) { ccode = 'EC'}
 
 
   if (length(code)>1) { warning('code has to be singleton'); code=code[1]}
