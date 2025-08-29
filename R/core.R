@@ -617,6 +617,9 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
   if (any('dataflows' %in% slotNames(dfmeta))) rid=dfmeta@dataflows[[1]]@dsdRef else rid =vq[2]
   if (toupper(vq[1])=='OECD') rid=vq[2]
   dfdsd=rsdmx::readSDMX(gsub('references=children','references=none',.rsdmxurl(vq[1],resource='datastructure',resourceId = rid)),verbose=verbose)
+  if (!('datastructures' %in% slotNames(dfdsd))) { #special OECD case such as https://sdmx.oecd.org/public/rest/dataflow/OECD.STI.PIE/DSD_TIVA_MAINLV@DF_MAINLV/1.0/?references=descendants&format=structure&detail=referencepartial
+    dfdsd=rsdmx::readSDMX(paste0(xmlGetAttr(getNodeSet(dfmeta@xmlObj,'//structure:Dataflow')[[1]],'structureURL') , "/?references=descendants&format=structure&detail=referencepartial"), verbose=verbose)
+  }
   if (isS4(dfdsd@datastructures)) { dfdsd=dfdsd@datastructures}
   possdn=unlist(lapply(dfdsd@datastructures[[1]]@Components@Dimensions, function(x) {yy=x@codelist; names(yy)=x@conceptRef; yy}))
   attr(possdn,'dsdRef') =rid
