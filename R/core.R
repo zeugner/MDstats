@@ -30,7 +30,7 @@
 
 
   #BBDY1) with the specified key (e.g. A.B10.N.G100.P0010.A).
-  surls['IMF'] = 'http://dataservices.imf.org/REST/SDMX_XML.svc/CompactData/'
+  surls['IMF_DATA'] = 'https://api.imf.org/external/sdmx/2.1/data/' #'http://dataservices.imf.org/REST/SDMX_XML.svc/CompactData/'
   surls['ECB'] = 'https://data-api.ecb.europa.eu/service/data/'
   surls['ESTAT'] = 'https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/'
   surls['ISTAT'] = 'https://esploradati.istat.it/SDMXWS/data/'
@@ -244,6 +244,25 @@
   mmd3
 }
 
+
+.findProvfromURL = function(apiurl, ascode=FALSE) {
+  if (any(grepl('\\?',apiurl))) { apiurl=gsub('\\?.*$',,',apiurl')}
+  mydomain = gsub('/.*$','',gsub('^https?://','',apiurl))
+  mydomainplus = paste0(mydomain,substr(gsub(paste0('^.*',mydomain),'',apiurl),0,5))
+  allurls=.mdstats_providers$table()
+  allurls=allurls[,apply(allurls,2,function(x) any(grepl('^http',x)))]
+  ixp=which(apply(allurls,1,function(x) any(grepl(mydomainplus,x))))
+  if (!length(ixp)) { ixp=which(apply(allurls,1,function(x) any(grepl(mydomain,x))))}
+  if (!length(ixp)==1) stop('Could not identify data provider from URL ', apiurl)
+
+  myfilter=  substr(apiurl,regexpr('/[^/]*/[^/]*$',apiurl)[1]+1,1000)
+  if (grepl('^data[a-z]*$',gsub('/.*$','',myfilter))) { myfilter=gsub('/.*$','',myfilter)}
+  pout=rownames(allurls)[ixp]
+  attr(pout,'filter')=myfilter
+  if (!ascode) return(pout)
+  paste0(pout,'/',myfilter)
+}
+
 .sdmxasmd3 = function(mycode,drop=TRUE,metadata=FALSE,verbose=FALSE, ccode=NULL, startPeriod='', endPeriod='') {
 
   #dfmeta=rsdmx::readSDMX(providerId=.fixSdmxCode(mycode)[1],resource='dataflow',resourceId = .fixSdmxCode(mycode)[2],verbose=verbose)
@@ -251,6 +270,7 @@
 
 
   if (any(grepl('^https*:/',trimws(mycode)))) {
+    if (any(grepl('\\?',mycode))) {  mycode = gsub('\\?.*$','',mycode)}
     mxml <- try(rsdmx::readSDMX(trimws(mycode),verbose = verbose),silent=TRUE)
     if (is(mxml,'try-error')) stop('Could not fetch data for URL ',mycode,'.\n')
     mout=.xml2md3(mxml)
@@ -271,7 +291,10 @@
 
   if (metadata) {
 
-
+    if (any(grepl('^https*:/',trimws(mycode)))) { #was URL
+      mycode = .fixSdmxCode(.findProvfromURL(mycode,T),asvector = FALSE)
+      possdn=.fetchfullcodelists(mycode,verbose=verbose)
+    }
     actdn=MD3:::.getdimnames(mout)
     nxt=setdiff(names(actdn),'TIME')
     if (length(nxt)) {
@@ -309,7 +332,7 @@
 #ii=.sdmxasmd3('BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL')
 #ii=.sdmxasmd3("BIS/WS_EER/M.N.B.AT+FR+BE")
 #ii=.sdmxasmd3('ESTAT/prc_hpi_q/Q..I10_Q.AT+BE')
-#ii=.sdmxasmd3('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
+#ii=.sdmxasmd3('IMF/CPI/USA+FRA.CPI.CP01.IX.M')
 
 
 
@@ -353,7 +376,7 @@
   if (match('codelists',slotNames(ocl),nomatch=0)) { ocl=ocl@codelists}
 
 
-  o1=unlist(lapply(slot(slot(ods[[1]],'Components'),'Dimensions'),function(x) paste0(ifelse(anyNA(x@conceptAgency),ods[[1]]@agencyID,.mdstats_providers$alias(x@conceptAgency)),'/',x@codelist)))
+  o1=unlist(lapply(slot(slot(ods[[1]],'Components'),'Dimensions'),function(x) paste0(ifelse(anyNA(x@conceptAgency),ods[[1]]@agencyID,.mdstats_providers$alias(x@conceptAgency)),'/',ifelse(anyNA(x@codelist),paste0('CL_',x@conceptRef),x@codelist))))
   names(o1)=unlist(lapply(slot(slot(ods[[1]],'Components'),'Dimensions'),slot,'conceptRef'))
   if (dimclonly) {
     return(o1)
@@ -374,10 +397,36 @@
     names(olabels[[j]]) = paste0("label:",names(o0[[j]]@Name))
   }
 
+  o3=list()
+  for (z in o0) {
+    posscn=c('code',paste0('label:',unique(unlist(lapply(z@Code,function(y) names(y@label))))))
+    tomp=as.data.frame(matrix(NA_character_,0,length(posscn),dimnames = list(c(),posscn)))
+    tomp[unlist(lapply(z@Code,function(zc) zc@id)),'code']=unlist(lapply(z@Code,function(zc) zc@id))
 
-  o3=lapply(o0, function(z) {tump=unlist(lapply(z@Code,function(y) {templabel=unlist(y@label); names(templabel)=paste0('label:',names(templabel)); return(c(code=y@id,templabel))} ));tomp=matrix(tump,ncol=1+length(z@Code[[1]]@label),byrow=TRUE); colnames(tomp)=c('code',paste0('label:',names(z@Code[[1]]@label)));rownames(tomp)=tomp[,1]; return(tomp)})
-  names(olabels)=names(o3)= lapply(o0, function(z) z@id)
+    for (zc in z@Code) {
+      tomp[zc@id,paste0('label:',names(zc@label))] = unlist(zc@label)
+    }
+    o3[[z@id]]=tomp
+  }
+
+  #o3=lapply(o0, function(z) {tump=unlist(lapply(z@Code,function(y) {templabel=unlist(y@label); names(templabel)=paste0('label:',names(templabel)); return(c(code=y@id,templabel))} ));tomp=matrix(tump,ncol=1+length(z@Code[[1]]@label),byrow=TRUE); colnames(tomp)=c('code',paste0('label:',names(z@Code[[1]]@label)));rownames(tomp)=tomp[,1]; return(tomp)})
+  names(olabels)=names(o3)= unlist(lapply(o0, function(z) z@id))
+    if (length(setdiff(gsub('^.*/','',o1),names(o3)))) {
+        cl404=setdiff(gsub('^.*/','',o1),names(o3))
+        for (icl in cl404){
+          iclix=grep(gsub('^CL_','',icl),names(o3))
+          if (length(iclix)==1) {
+            warning('No exact match found for the codelist underpinning dimension ',gsub('^CL_','',icl),'. This instead uses codelist ', names(o3)[iclix] ,', which is the most probable match')
+            o1=gsub(icl,names(o3)[iclix] ,o1)
+          }
+        }
+    }
   o3=o3[gsub('^.*/','',o1)]
+  if (any(!unlist(lapply(o3,length)))) {
+    ix404=which(!unlist(lapply(o3,length)))
+    names(o3)[ix404] = gsub('^.*/','',o1)[ix404]
+    o3[ix404] = list(as.data.frame(matrix(NA_character_,0,2,dimnames = list(c(),c('code','label:en')))))
+  }
   olabels=olabels[names(o3)]
   o3=lapply(o3,function(x) {if (!any('label:en'==colnames(x))) return(x); if (which('label:en'==colnames(x))==2) { return(x) }; return(x[,c('code','label:en',setdiff(colnames(x),c('code','label:en')))])})
   names(olabels) = names(o3) = names(o1)
@@ -440,7 +489,8 @@
 #' foo[AT:BG.TOTAL.y2020:y]
 #'
 #' mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
-#' mdSdmx('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
+#' mdSdmx('IMF/CPI/USA+FRA.CPI.CP01.IX.M')
+#'
 #'
 #' mdSdmx("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 #' #is the same as
@@ -511,7 +561,8 @@ mdSdmx = function(code, startPeriod='',endPeriod='', drop=TRUE, labels=FALSE,
 #' foo[AT:BG.TOTAL.y2020:y]
 #'
 #' mds("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
-#' mds('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
+#' mds('IMF/CPI/USA+FRA.CPI.CP01.IX.M') # Inflation rates from IMF
+#' mds('IMF/FSIC/AUT+BEL.S12CFSI.AQ12_CFSI_PT.A',startPeriod = 2015) #NPLs from IMF
 #'
 #' mds("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 #'
@@ -523,6 +574,11 @@ mdSdmx = function(code, startPeriod='',endPeriod='', drop=TRUE, labels=FALSE,
 #' a1=mds('ESTAT/prc_hpi_a/A...',verbose=TRUE)
 #' #to
 #' a2=mds('ESTAT/prc_hpi_a',verbose=TRUE)
+#'
+#'
+#' #Also works from API URLs, such as those found via the OECD website:
+#' mds("https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_BIMTS@DF_BIMTS_CPA_2_1,1.0/USA.AUS..C._T..A.USD_EXC.B?startPeriod=2019&dimensionAtObservation=AllDimensions")
+#'
 #' @export
 mds = function(code, startPeriod='', endPeriod='', drop=TRUE, labels=FALSE,
                     as = c("md3", "array", "numeric", "data.table", "zoo", "2d", "1d", "pdata.frame",'data.frame'),
@@ -616,6 +672,7 @@ DTstat= function(code, reshape=as.formula(...~ TIME), drop=TRUE, labels=FALSE,
   dfmeta=rsdmx::readSDMX(providerId=vq[1],resource='dataflow',resourceId = vq[2],verbose = verbose)
   if (any('dataflows' %in% slotNames(dfmeta))) rid=dfmeta@dataflows[[1]]@dsdRef else rid =vq[2]
   if (toupper(vq[1])=='OECD') rid=vq[2]
+  if (toupper(vq[1])=='IMF_DATA' & Sys.Date()-as.Date('2025-09-01')<50) message('In September 2025, the SDMX API of IMF switched to a new format. Please note that some dataflow codes have change as a result. E.g. IMF/FSI has been replaced by IMF/FSIC')
   dfdsd=rsdmx::readSDMX(gsub('references=children','references=none',.rsdmxurl(vq[1],resource='datastructure',resourceId = rid)),verbose=verbose)
   if (!('datastructures' %in% slotNames(dfdsd))) { #special OECD case such as https://sdmx.oecd.org/public/rest/dataflow/OECD.STI.PIE/DSD_TIVA_MAINLV@DF_MAINLV/1.0/?references=descendants&format=structure&detail=referencepartial
     dfdsd=rsdmx::readSDMX(paste0(xmlGetAttr(getNodeSet(dfmeta@xmlObj,'//structure:Dataflow')[[1]],'structureURL') , "/?references=descendants&format=structure&detail=referencepartial"), verbose=verbose)

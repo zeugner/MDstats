@@ -81,7 +81,8 @@ foo=mds("ESTAT/prc_hpi_q/Q..I15_Q.")
 foo[AT:BG.TOTAL.y2020:y]
 
 mds("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
-mds('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
+mds('IMF/CPI/USA+FRA.CPI.CP01.IX.M') # Inflation rates from IMF
+mds('IMF/FSIC/AUT+BEL.S12CFSI.AQ12_CFSI_PT.A',startPeriod = 2015) #NPLs from IMF
 
 mds("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 
@@ -93,6 +94,11 @@ mds("AMECO/A/AT+FR+BE.1_0_0_0_UVGD", as='data.table')
 a1=mds('ESTAT/prc_hpi_a/A...',verbose=TRUE)
 #to
 a2=mds('ESTAT/prc_hpi_a',verbose=TRUE)
+
+
+#Also works from API URLs, such as those found via the OECD website:
+mds("https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_BIMTS@DF_BIMTS_CPA_2_1,1.0/USA.AUS..C._T..A.USD_EXC.B?startPeriod=2019&dimensionAtObservation=AllDimensions")
+
 }
 \seealso{
 \code{\link{helpmds}}, \code{\link{DTstat}}, \code{\link[MD3]{Nomics}}, \code{\link[MDcountrycode]{defaultcountrycode}}, \code{\link{mdAmeco}}, \code{\link{mdWEO}}

@@ -48,7 +48,8 @@ foo=mdSdmx("ESTAT/prc_hpi_q/Q..I15_Q.")
 foo[AT:BG.TOTAL.y2020:y]
 
 mdSdmx("BBK/BBFBOPV/M.N.DE.W1.S1.S1.T.B.G+S+CA._Z._Z._Z.EUR._T._X.N.ALL")
-mdSdmx('IMF/FSI/A.FI+DK+AT.FSASDLD_EUR+FSANL_PT')
+mdSdmx('IMF/CPI/USA+FRA.CPI.CP01.IX.M')
+
 
 mdSdmx("BIS/WS_EER/M.N.B.AT+FR+BE",startPeriod=2021)
 #is the same as
