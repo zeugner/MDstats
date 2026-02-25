@@ -178,6 +178,7 @@
     if (!length(dcodes2)) {stop('SDMX result contains 0 time series')}
     if (nbdimsexcltime<1) stop('cant find proper dimension codes')
     dcodes2=dcodes2[names(dcodes2)=='Series']
+    if (!length(dcodes2)) { stop('SDMX result contains some information, but 0 time series - which might be due to incorrect application of filter codes. Try helpmds() with your request to find out why.')}
     dcodes2=lapply(dcodes2,function(x) x[dims])
   } else {
     dcodes0=xmlApply(xmlChildren(slot(ressdmx,'xmlObj'))[[1]][["DataSet"]],"[[","SeriesKey")
@@ -230,7 +231,7 @@
 
   if (length(tname)) {
     fname=dnames[tolower(dnames) %in% c('freq','frq','frequency')][1]
-    dmd3[['TIME']] = MD3::as.timo(dmd3[['TIME']],frq = dmd3[[fname]])
+    dmd3[['TIME']] = MD3:::.char2timo(dmd3[['TIME']],frq = dmd3[[fname]])
   }
 
   on2=unlist(lapply(as.list(onames),MD3:::.md3resnames))
