@@ -73,31 +73,45 @@
 
 }
 
-.vintageAmecourl = function(year,release) {
+# .vintageAmecourl = function(year,release) {
+#   #year must be >2011. release must be a or s
+#
+#     release=switch(substr(tolower(trimws(release)),0,1),a='autumn',s='spring','1'='spring','2'='autumn')
+#
+#   baseurl='https://economy-finance.ec.europa.eu/economic-research-and-databases/economic-databases/ameco-database/ameco-archive_en'
+#   #src=httr::GET(baseurl)
+#   src=readLines(baseurl)
+#   sline=src[grep(paste0('<h2>\\s*',year),src)]
+#   slin2=sub(paste0('^.*<h2>\\s*',year),'',sline)
+#   slin3=gsub("\\<h2.*$",'',substr(slin2,15,10000))
+#   ix=attr(regexpr(paste0('^.*',tolower(release)),tolower(slin3)),'match.length')
+#   slin4=substr(slin3,ix-200,ix+100)
+#   if (!length(slin4)) {stop('The Ameco file for ',year,' ',release,' is not available at\n',baseurl)}
+#   slin5=paste0(gsub('^.*href="','',gsub('\\.zip".*$','',slin4)),'.zip')
+#   surl=paste0(gsub('\\.eu/.*$','',baseurl),'.eu',slin5)
+#   return(surl)
+#
+# }
+
+.vintageAmecourl =function (year, release)
+{
   #year must be >2011. release must be a or s
-
-    release=switch(substr(tolower(trimws(release)),0,1),a='autumn',s='spring','1'='spring','2'='autumn')
-
-  baseurl='https://economy-finance.ec.europa.eu/economic-research-and-databases/economic-databases/ameco-database/ameco-archive_en'
-  #src=httr::GET(baseurl)
-  src=readLines(baseurl)
-  sline=src[grep(paste0('<h2>\\s*',year),src)]
-  slin2=sub(paste0('^.*<h2>\\s*',year),'',sline)
-  slin3=gsub("\\<h2.*$",'',substr(slin2,15,10000))
-  ix=attr(regexpr(paste0('^.*',tolower(release)),tolower(slin3)),'match.length')
-  slin4=substr(slin3,ix-200,ix+100)
-  if (!length(slin4)) {stop('The Ameco file for ',year,' ',release,' is not available at\n',baseurl)}
-  slin5=paste0(gsub('^.*href="','',gsub('\\.zip".*$','',slin4)),'.zip')
-  surl=paste0(gsub('\\.eu/.*$','',baseurl),'.eu',slin5)
+  release = switch(substr(tolower(trimws(release)), 0, 1),
+                   a = "autumn", s = "spring", `1` = "spring", `2` = "autumn")
+  baseurl = "https://economy-finance.ec.europa.eu/economic-research-and-databases/economic-databases/ameco-database/ameco-archive_en"
+  src = readLines(baseurl)
+  sline = src[grep('class="ecl-file__info".*' %&% year,src)]
+  if (length(sline)>1) { sline = sline[grep(release,sline,ignore.case = TRUE)[1]]}
+  slin5=gsub('^.*href="','',gsub('\\.zip.*$','.zip',sline))
+  surl = paste0(gsub("\\.eu/.*$", "", baseurl), ".eu", slin5)
   return(surl)
-
 }
 
 #' Load data from publicly available Ameco, and is past vintages
 #'
 #' @param code a RestFul code combination respecting Ameco dimensions COUNTRY.x.x.x.x.INDICATOR, e.g. \code{CAN.1.0.99+0.0.UVGD}
 #' @param year year of the release. Default 0 means current/latest release
-#' @param release character singleton 'autumn' or 'spring'. Ignored if year is 0 and thus points to current release.
+#' @param release character singleton 'autumn' (or simply 'a' or 2) or 'spring' (or simply 's' or 1). Ignored if year is 0 and thus points to current release.
 #' @param as how to output the result: \code{md3}: as md3 object with full metadata, \code{2d}: as a data.table with periods as column names, \code{1d} resp. \code{data.table}: as fully stacked data.table, \code{array}: as multi-dim array, \code{zoo}: as \code{\link[zoo]{zooreg}} time series object.
 #' @param drop if TRUE, drop any singleton dimensions (see also drop.md3)
 #' @param ccode If not \code{ccode==NULL}, then the function attempts to convert to ccode destination such as 'iso2c', 'EC', 'iso3c'. See \code{\link[MDcountrycode]{ccode}} for permissible values.  \code{\link[MDcountrycode]{defaultcountrycode}} for defining this value as a session-wide option.

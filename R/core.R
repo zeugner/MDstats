@@ -151,7 +151,7 @@
   if (justurl) return(myurl)
   if (verbose) cat('\nreading from ',myurl,' ...\n')
   ressdmx <- try(rsdmx::readSDMX(myurl,verbose = verbose),silent=TRUE)
-  if (is(ressdmx,'try-error')) stop('Could not fetch data for query code ',mycode,'.\nTry running helpmds("',mycode,'") to find out why.\n')
+  if (is(ressdmx,'try-error')) stop('Could not fetch data for query code ',mycode,'.\n','Error message: ',gsub('^.* :\\s*\\n ','',substr(as.character(ressdmx),0,500)),'\nTry running helpmds("',mycode,'") to find out why.\n')
   if (!length(ressdmx)) { stop('The web request to ',myurl, ' returned NULL, perhaps for latency resons. Please try again.' ) }
   if (justxml) return(ressdmx)
   if (class(ressdmx)=='SDMXCompactData') {

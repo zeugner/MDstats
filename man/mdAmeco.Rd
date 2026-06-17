@@ -24,7 +24,7 @@ mdAmeco(
 
 \item{year}{year of the release. Default 0 means current/latest release}
 
-\item{release}{character singleton 'autumn' or 'spring'. Ignored if year is 0 and thus points to current release.}
+\item{release}{character singleton 'autumn' (or simply 'a' or 2) or 'spring' (or simply 's' or 1). Ignored if year is 0 and thus points to current release.}
 
 \item{as}{how to output the result: \code{md3}: as md3 object with full metadata, \code{2d}: as a data.table with periods as column names, \code{1d} resp. \code{data.table}: as fully stacked data.table, \code{array}: as multi-dim array, \code{zoo}: as \code{\link[zoo]{zooreg}} time series object.}
 
