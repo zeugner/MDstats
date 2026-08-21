@@ -1141,6 +1141,7 @@ helpmds = function(query='', pattern = "", dim = NULL, verbose = TRUE){
         mydc[[i]] = mydic;
       }
     }
+    if (!any(match(whichdim,names(mydc),nomatch=0))) {return(x)}
     if (length(setdiff(whichdim,notgood)))  {y=MDcountrycode:::.fixcountrycode(x,tocode = tocode,cols2fix = setdiff(whichdim,notgood))} else {y=x}
 
     if (!is.null(mydc)) {attr(y,'dcstruct') =mydc}

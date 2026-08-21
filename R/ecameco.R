@@ -3,8 +3,13 @@
 .mdAMECOfilepath = function (year=0,release=c('spring','autumn'), quiet=TRUE,conttrying=TRUE)
 {
   if (year<2010 & year>0) stop("Ameco vintages pre-2011 are not available ")
-
+  release = switch(substr(tolower(trimws(release)), 0, 1),
+                   a = "autumn", s = "spring", `1` = "spring", `2` = "autumn")
+  amecotime='2010-12-31'
   amecourl="https://ec.europa.eu/economy_finance/db_indicators/ameco/documents/ameco0.zip"
+
+  amecotime = paste0(year, c(spring='-04-01', autumn='-10-01')[release])
+
   if (year>2010) {#
     #release=switch(substr(tolower(release[[1L]])),'a'=)
     amecourl=.vintageAmecourl(year,release)
@@ -103,6 +108,7 @@
   sline = src[grep('class="ecl-file__info".*' %&% year,src)]
   if (length(sline)>1) { sline = sline[grep(release,sline,ignore.case = TRUE)[1]]}
   slin5=gsub('^.*href="','',gsub('\\.zip.*$','.zip',sline))
+  if (!length(slin5)) { stop('Could not identify Ameco release ',year,' ',release,' at ',baseurl)}
   surl = paste0(gsub("\\.eu/.*$", "", baseurl), ".eu", slin5)
   return(surl)
 }
