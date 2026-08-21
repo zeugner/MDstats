@@ -3,8 +3,13 @@
 .mdAMECOfilepath = function (year=0,release=c('spring','autumn'), quiet=TRUE,conttrying=TRUE)
 {
   if (year<2010 & year>0) stop("Ameco vintages pre-2011 are not available ")
-
+  release = switch(substr(tolower(trimws(release)), 0, 1),
+                   a = "autumn", s = "spring", `1` = "spring", `2` = "autumn")
+  amecotime='2010-12-31'
   amecourl="https://ec.europa.eu/economy_finance/db_indicators/ameco/documents/ameco0.zip"
+
+  amecotime = paste0(year, c(spring='-04-01', autumn='-10-01')[release])
+
   if (year>2010) {#
     #release=switch(substr(tolower(release[[1L]])),'a'=)
     amecourl=.vintageAmecourl(year,release)
@@ -13,7 +18,7 @@
     dtcurameco=hurl$all_headers[[length(hurl$all_headers)]]$headers$`last-modified`
     amecotime=format(as.POSIXct(dtcurameco,format="%a, %d %b %Y %H:%M",tz='UTC'),"%F")
   }
-  release=switch(substr(tolower(release[[1]]),0,1),a='AF',s='SF')
+  if (year>0) release=switch(substr(tolower(release[[1]]),0,1),a='AF',s='SF')
 
 
   datasetcode = paste0('ameco_',year,release)
@@ -47,7 +52,7 @@
   vfiles=utils::unzip(zipfilepath,exdir = gsub("\\.zip","",zipfilepath),overwrite=TRUE)
 
 
-  lameco=lapply(as.list(vfiles),fread,fill=TRUE,header =TRUE)
+  lameco=lapply(as.list(vfiles),fread,fill=TRUE,header =TRUE, na.strings=c('',':','NA'))
   unlink(gsub("\\.zip","",zipfilepath),recursive = TRUE)
   dameco=rbindlist(lameco)
   if (anyDuplicated(dameco[[1]])) dameco=dameco[!duplicated(dameco[[1]]),]
@@ -103,6 +108,7 @@
   sline = src[grep('class="ecl-file__info".*' %&% year,src)]
   if (length(sline)>1) { sline = sline[grep(release,sline,ignore.case = TRUE)[1]]}
   slin5=gsub('^.*href="','',gsub('\\.zip.*$','.zip',sline))
+  if (!length(slin5)) { stop('Could not identify Ameco release ',year,' ',release,' at ',baseurl)}
   surl = paste0(gsub("\\.eu/.*$", "", baseurl), ".eu", slin5)
   return(surl)
 }
@@ -178,6 +184,9 @@ mdAmeco = function(code="",year=0,release=0,as=c("md3", "array", "numeric","data
     if (any(grepl('\\+',temp[[1L]]))) {
 
       temp[[1L]]=paste(MDcountrycode::ccode(strsplit(temp[[1L]],split='\\+')[[1L]],c('iso2m','iso3c','iso2c'),'ameco',leaveifNA = TRUE,warn = FALSE),collapse='+')
+      code=paste(temp,collapse = '.')
+    } else if (nchar(temp[[1L]])) {
+      temp[[1L]]=MDcountrycode::ccode(temp[[1L]],c('iso2m','iso3c','iso2c'),'ameco',leaveifNA = TRUE,warn = FALSE)
       code=paste(temp,collapse = '.')
     }
   } else {temp=''}
